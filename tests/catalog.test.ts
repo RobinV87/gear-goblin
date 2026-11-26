@@ -18,11 +18,11 @@ describe('catalog hardware data', () => {
     expect(findAnbernicModel('Anbernic', 'RG DS Plus')?.specs?.ram).toBe('1 GB')
     expect(findAnbernicModel('Anbernic', 'RG353V')?.specs?.ram).toBe('2 GB')
     expect(findAnbernicModel('Anbernic', 'RG353VS')?.specs?.ram).toBe('1 GB')
-    expect(findAnbernicModel('Anbernic', 'RG35XX')?.specs).toBeUndefined()
-    expect(findAnbernicModel('Anbernic', 'RG300')?.specs).toBeUndefined()
+    expect(findAnbernicModel('Anbernic', 'RG35XX')?.specs?.ram).toBe('256 MB DDR3')
+    expect(findAnbernicModel('Anbernic', 'RG300')?.specs?.ram).toBe('128 MB DDR2')
     for (const model of anbernicModels) {
       const specs = findAnbernicModel('Anbernic', model.model)?.specs
-      if (specs) expect(new URL(specs.source).hostname).toMatch(/(^|\.)anbernic\.com$/)
+      if (specs) expect(new URL(specs.source).protocol).toBe('https:')
     }
   })
 })

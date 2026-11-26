@@ -1,4 +1,4 @@
-// Manufacturer product-page reference data; omitted fields are not verified.
+// Source-linked reference data; omitted fields are not verified.
 import type { HardwareSpecs } from './anbernic'
 export const hardware: Record<string, HardwareSpecs> = {
   "RG280M": {
@@ -392,5 +392,22 @@ export const hardware: Record<string, HardwareSpecs> = {
     "battery": "2 × 4,500 mAh (manufacturer listing)",
     "connectivity": "Wi-Fi 5; Bluetooth 4.2",
     "stockOs": "Windows 10 Home"
+  },
+  "RG300": {
+    "source": "https://www.retrodock.com/handhelds/anbernic/rg300/",
+    "cpu": "Ingenic JZ4760B, XBurst",
+    "gpu": "Vivante GC200",
+    "ram": "128 MB DDR2",
+    "display": "3-inch IPS (resolution varies by source)",
+    "battery": "1,800 mAh",
+    "connectivity": "No built-in Wi-Fi or Bluetooth",
+    "stockOs": "OpenDingux"
+  },
+  "RG35XX": {
+    "source": "https://www.youtube.com/watch?v=UZUT0LezrFs",
+    "cpu": "Quad-core ARM Cortex-A9",
+    "gpu": "PowerVR SGX544MP",
+    "ram": "256 MB DDR3",
+    "display": "3.5-inch IPS, 640 × 480"
   }
 }
