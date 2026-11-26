@@ -250,3 +250,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
 .workshop-list strong { overflow-wrap: anywhere; }.workshop-list p { color: #c2cbbd; font-size: 12px; margin-top: 4px; }
 .record-actions { display: flex; flex-shrink: 0; align-items: start; gap: 8px; }.record-actions button { min-height: 40px; padding: 6px; background: transparent; border: 0; color: #ffc186; text-decoration: underline; }
 .index-records { margin-top: 15px; }.index-records button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 0; background: transparent; border: 0; border-top: 1px solid #667363; color: #f5efe4; text-align: left; }.index-records button strong { flex: 1; }.index-records button span { color: #c2cbbd; font-size: 12px; }
+.card-photo { display: block; width: 100%; height: 150px; object-fit: contain; background: #303a30; border-bottom: 1px solid #606c59; }
+.device-list .card-photo { height: 100%; min-height: 140px; grid-row: span 2; border-right: 1px solid #606c59; }
+.detail-photo { display: block; width: 100%; height: 240px; object-fit: contain; background: #303a30; border: 1px solid #b56c35; border-radius: 12px; }
+.photo-actions, .backup-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }.photo-actions label { cursor: pointer; }
+.backup-panel { background: #222729; border: 1px solid #a8683b; border-radius: 12px; padding: 24px; margin-bottom: 16px; max-width: 700px; }.backup-panel h2 { margin: 8px 0; }.backup-panel p { color: #d1d5c9; font-size: 13px; margin: 10px 0; }.restore-preview { border-top: 1px solid #667363; margin-top: 18px; padding-top: 18px; }
+@media (min-width: 800px) { .detail-photo { height: 350px; } }
+@media (min-width: 1100px) { .detail-photo { height: 380px; } }

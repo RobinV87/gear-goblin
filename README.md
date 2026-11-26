@@ -4,7 +4,7 @@
 
 ## Current milestone
 
-Create, edit, list and delete basic handheld profiles in a browser, with local IndexedDB storage. Collection and device views offer grid and list layouts. Track firmware installations, storage configurations, accessories and modifications for each device. Firmware and storage sections provide an index of your handhelds. Data is local to the browser profile and can be lost if site data is cleared. Backup is not implemented yet; do not use this milestone as the sole record of a collection.
+Create, edit, list and delete basic handheld profiles in a browser, with local IndexedDB storage. Collection and device views offer grid and list layouts. Track firmware installations, storage configurations, accessories and modifications for each device. Firmware and storage sections provide an index of your handhelds. Device photos can be added from a JPEG, PNG or WebP file (up to 5 MB). Settings provides versioned ZIP export and full replacement restore, including photos and related records. Data is local to the browser profile and can be lost if site data is cleared; keep backups in a separate location.
 
 ## Development
 
@@ -20,12 +20,12 @@ Screenshots will be added after the interface is verified on Android.
 
 ## Privacy
 
-Device data remains in local browser storage. No serial numbers or purchase details are collected in 1A. Future backups will contain private data and must be handled accordingly.
+Device data remains in local browser storage. Purchase dates and other user-entered details remain local. Backups are unencrypted and contain your collection and photos; store them securely.
 
 ## Roadmap
 
 - 1B: firmware history, storage, accessories and modifications (browser implementation).
-- 1C: versioned native database, complete validated backup and transactional restore.
+- 1C: versioned browser database, validated backup and transactional restore; native SQLite remains to be implemented and verified.
 - 1D: Android packaging, usability, documentation and release preparation.
 - Later: model catalog, comparisons, QR labels, repair reminders, statistics, wishlist, optional donations and synchronization, desktop app, and advanced configuration management.
 
