@@ -1,3 +1,4 @@
+import { defaultSettings, settingsSchema, type AppSettings } from '../features/settings/model'
 import Dexie, { type EntityTable } from 'dexie'
 import { validateDevice, type Device, type DeviceInput } from '../features/devices/model'
 import { type DeviceImage, validImage } from '../features/devices/image'
@@ -14,15 +15,17 @@ export interface DeviceRepository {
   snapshot(): Promise<CollectionSnapshot>
   restore(snapshot: CollectionSnapshot): Promise<void>
   setImage(deviceId: string, image: DeviceImage | null): Promise<void>
+  saveSettings(settings: AppSettings): Promise<void>
 }
-export interface CollectionSnapshot { devices: Device[]; records: WorkshopRecord[]; images: DeviceImage[] }
+export interface CollectionSnapshot { devices: Device[]; records: WorkshopRecord[]; images: DeviceImage[]; settings: AppSettings }
 export class BrowserDeviceRepository implements DeviceRepository {
-  private db: Dexie & { devices: EntityTable<Device, 'id'>; records: EntityTable<WorkshopRecord, 'id'>; images: EntityTable<DeviceImage, 'deviceId'> }
+  private db: Dexie & { devices: EntityTable<Device, 'id'>; records: EntityTable<WorkshopRecord, 'id'>; images: EntityTable<DeviceImage, 'deviceId'>; settings: EntityTable<{ id: string; value: AppSettings }, 'id'> }
   constructor(name = 'gear-goblin') {
     this.db = new Dexie(name) as typeof this.db
     this.db.version(1).stores({ devices: 'id, manufacturer, model, createdAt' })
     this.db.version(2).stores({ devices: 'id, manufacturer, model, createdAt', records: 'id, deviceId, kind, [deviceId+kind]' })
     this.db.version(3).stores({ devices: 'id, manufacturer, model, createdAt', records: 'id, deviceId, kind, [deviceId+kind]', images: 'deviceId' })
+    this.db.version(4).stores({ devices: 'id, manufacturer, model, createdAt', records: 'id, deviceId, kind, [deviceId+kind]', images: 'deviceId', settings: 'id' })
   }
   async list() { return this.db.devices.orderBy('createdAt').reverse().toArray() }
   async create(input: DeviceInput) {
@@ -60,7 +63,7 @@ export class BrowserDeviceRepository implements DeviceRepository {
   }
   async deleteRecord(id: string) { await this.db.records.delete(id) }
   async snapshot(): Promise<CollectionSnapshot> {
-    return this.db.transaction('r', this.db.devices, this.db.records, this.db.images, async () => ({ devices: await this.db.devices.toArray(), records: await this.db.records.toArray(), images: await this.db.images.toArray() }))
+    return this.db.transaction('r', this.db.devices, this.db.records, this.db.images, this.db.settings, async () => ({ devices: await this.db.devices.toArray(), records: await this.db.records.toArray(), images: await this.db.images.toArray(), settings: (await this.db.settings.get('preferences'))?.value ?? { ...defaultSettings } }))
   }
   async setImage(deviceId: string, image: DeviceImage | null) {
     if (image && (image.deviceId !== deviceId || !validImage(image.data, image.mime))) throw new Error('Invalid image.')
@@ -69,10 +72,11 @@ export class BrowserDeviceRepository implements DeviceRepository {
       if (image) await this.db.images.put(image); else await this.db.images.delete(deviceId)
     })
   }
+  async saveSettings(settings: AppSettings) { await this.db.settings.put({ id: 'preferences', value: settingsSchema.parse(settings) }) }
   async restore(snapshot: CollectionSnapshot) {
-    await this.db.transaction('rw', this.db.devices, this.db.records, this.db.images, async () => {
+    await this.db.transaction('rw', this.db.devices, this.db.records, this.db.images, this.db.settings, async () => {
       await this.db.images.clear(); await this.db.records.clear(); await this.db.devices.clear()
-      await this.db.devices.bulkAdd(snapshot.devices); await this.db.records.bulkAdd(snapshot.records); await this.db.images.bulkAdd(snapshot.images)
+      await this.db.devices.bulkAdd(snapshot.devices); await this.db.records.bulkAdd(snapshot.records); await this.db.images.bulkAdd(snapshot.images); await this.db.settings.put({ id: 'preferences', value: settingsSchema.parse(snapshot.settings) })
     })
   }
 }

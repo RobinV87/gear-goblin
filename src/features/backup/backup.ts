@@ -1,5 +1,6 @@
 import { strFromU8, strToU8, zipSync, unzipSync } from 'fflate'
 import { z } from 'zod'
+import { defaultSettings, settingsSchema } from '../settings/model'
 import { validImage, type DeviceImage } from '../devices/image'
 import type { CollectionSnapshot } from '../../services/deviceRepository'
 
@@ -11,7 +12,8 @@ const calendarDate = z.union([z.literal(''), z.iso.date()])
 const device = z.object({ id: uuid, manufacturer: text.refine(value => value.trim().length > 0), model: text.refine(value => value.trim().length > 0), nickname: text, variant: text, notes: text, purchaseDate: calendarDate.optional(), createdAt: timestamp, updatedAt: timestamp }).strict()
 const record = z.object({ id: uuid, deviceId: uuid, kind: z.enum(['firmware','storage','accessory','modification']), name: text.refine(value => value.trim().length > 0), version: text, date: calendarDate, previousFirmware: text, succeeded: z.boolean(), capacity: text, purpose: text, notes: text, createdAt: timestamp }).strict()
 const image = z.object({ deviceId: uuid, mime: z.enum(['image/jpeg','image/png','image/webp']), path: z.string().max(100) }).strict()
-const manifest = z.object({ format: z.literal('gear-goblin-backup'), version: z.literal(1), exportedAt: timestamp, devices: z.array(device).max(10000), records: z.array(record).max(100000), images: z.array(image).max(10000) }).strict()
+const manifestFields = { format: z.literal('gear-goblin-backup'), exportedAt: timestamp, devices: z.array(device).max(10000), records: z.array(record).max(100000), images: z.array(image).max(10000) }
+const manifest = z.discriminatedUnion('version', [z.object({ ...manifestFields, version: z.literal(1) }).strict(), z.object({ ...manifestFields, version: z.literal(2), settings: settingsSchema }).strict()])
 
 function crc32(bytes: Uint8Array): number {
   let crc = 0xffffffff
@@ -54,7 +56,7 @@ export function createBackup(snapshot: CollectionSnapshot): Uint8Array {
     const path = `images/${item.deviceId}.${ext}`; files[path] = item.data
     return { deviceId: item.deviceId, mime: item.mime, path }
   })
-  const payload = manifest.parse({ format: 'gear-goblin-backup', version: 1, exportedAt: new Date().toISOString(), devices: snapshot.devices, records: snapshot.records, images })
+  const payload = manifest.parse({ format: 'gear-goblin-backup', version: 2, exportedAt: new Date().toISOString(), devices: snapshot.devices, records: snapshot.records, images, settings: snapshot.settings })
   files['manifest.json'] = strToU8(JSON.stringify(payload))
   const result = zipSync(files, { level: 0 }); if (result.length > maxArchive) throw new Error('Collection exceeds the 50 MB backup limit.')
   return result
@@ -72,6 +74,6 @@ export function readBackup(data: Uint8Array): CollectionSnapshot {
       if (i.path !== `images/${i.deviceId}.${ext}` || !files[i.path] || !validImage(files[i.path], i.mime)) throw new Error('Invalid image.')
       return { deviceId: i.deviceId, mime: i.mime, data: files[i.path] }
     })
-    return { devices: parsed.devices, records: parsed.records, images }
+    return { devices: parsed.devices, records: parsed.records, images, settings: parsed.version === 2 ? parsed.settings : { ...defaultSettings } }
   } catch { throw new Error('This backup is invalid, unsupported, or damaged. Your collection was not changed.') }
 }

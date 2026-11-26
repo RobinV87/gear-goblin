@@ -4,7 +4,7 @@
 
 ## Current milestone
 
-Create, edit, list and delete basic handheld profiles in a browser, with local IndexedDB storage. Collection and device views offer grid and list layouts. Track firmware installations, storage configurations, accessories and modifications for each device. Firmware and storage sections provide an index of your handhelds. Device photos can be added from a JPEG, PNG or WebP file (up to 5 MB). Settings provides versioned ZIP export and full replacement restore, including photos and related records. Data is local to the browser profile and can be lost if site data is cleared; keep backups in a separate location.
+Create, edit, list and delete basic handheld profiles in a browser, with local IndexedDB storage. Collection and device views offer grid and list layouts. Track firmware installations, storage configurations, accessories and modifications for each device. Firmware and storage sections provide an index of your handhelds. Device photos can be added from a JPEG, PNG or WebP file (up to 5 MB). Settings offers Workshop, Workbench Light, Pocket Green and system-following themes, larger text and reduced motion. The grid/list choice is remembered. Versioned ZIP export and full replacement restore include photos, related records and preferences. Data is local to the browser profile and can be lost if site data is cleared; keep backups in a separate location.
 
 ## Development
 

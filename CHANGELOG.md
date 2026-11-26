@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added theme, accessibility and collection view preferences, including backup support.
+
 - Added local device photos and validated ZIP backup and transactional restore for browser collections.
 
 - Added local firmware history, storage, accessories, and modifications with a versioned database upgrade.
