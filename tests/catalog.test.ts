@@ -12,3 +12,17 @@ describe('Anbernic catalog', () => {
     for (const item of anbernicModels) if (item.released) expect(item.released).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/)
   })
 })
+
+describe('catalog hardware data', () => {
+  it('provides sourced specifications for known models and keeps disputed models unverified', () => {
+    expect(findAnbernicModel('Anbernic', 'RG DS Plus')?.specs?.ram).toBe('1 GB')
+    expect(findAnbernicModel('Anbernic', 'RG353V')?.specs?.ram).toBe('2 GB')
+    expect(findAnbernicModel('Anbernic', 'RG353VS')?.specs?.ram).toBe('1 GB')
+    expect(findAnbernicModel('Anbernic', 'RG35XX')?.specs).toBeUndefined()
+    expect(findAnbernicModel('Anbernic', 'RG300')?.specs).toBeUndefined()
+    for (const model of anbernicModels) {
+      const specs = findAnbernicModel('Anbernic', model.model)?.specs
+      if (specs) expect(new URL(specs.source).hostname).toMatch(/(^|\.)anbernic\.com$/)
+    }
+  })
+})

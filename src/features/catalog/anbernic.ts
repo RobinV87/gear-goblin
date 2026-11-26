@@ -1,6 +1,7 @@
+import { hardware } from './hardware'
 /** Curated starter catalog; dates are approximate release months, not purchase dates.
  * Sources and known disagreements: docs/CATALOG.md. */
-export type HardwareSpecs = { cpu: string; gpu: string; ram: string; display: string; battery: string; connectivity: string; stockOs: string; source: string }
+export type HardwareSpecs = { cpu?: string; gpu?: string; ram?: string; display?: string; battery?: string; connectivity?: string; stockOs?: string; source: string }
 export type CatalogModel = { model: string; released?: string; specs?: HardwareSpecs }
 export const anbernicModels: CatalogModel[] = [
   { model: 'RG280M', released: '2020-06' }, { model: 'RG280V', released: '2020-11' },
@@ -18,7 +19,9 @@ export const anbernicModels: CatalogModel[] = [
   { model: 'RG DS', released: '2025-12' }, { model: 'RG DS Plus', released: '2026-09', specs: { cpu: 'RK3568, quad-core Cortex-A55 up to 2.0 GHz', gpu: 'ARM G52 2EE', ram: '1 GB', display: 'Two 4.3-inch IPS screens, 1024 × 768 each', battery: '4,000 mAh', connectivity: 'Wi-Fi 2.4 / 5 GHz; Bluetooth 4.2', stockOs: 'Linux', source: 'https://anbernic.com/products/rg-ds-plus' } }, { model: 'RG Nano', released: '2023-06' }, { model: 'RG Slide', released: '2025-06' }, { model: 'Win600', released: '2022-07' },
 ]
 export function findAnbernicModel(manufacturer: string, model: string): CatalogModel | undefined {
-  return manufacturer.trim().toLowerCase() === 'anbernic' ? anbernicModels.find(item => item.model.toLowerCase() === model.trim().toLowerCase()) : undefined
+  if (manufacturer.trim().toLowerCase() !== 'anbernic') return undefined
+  const item = anbernicModels.find(entry => entry.model.toLowerCase() === model.trim().toLowerCase())
+  return item ? { ...item, specs: item.specs ?? hardware[item.model] } : undefined
 }
 export function releaseLabel(month: string): string {
   const [year, number] = month.split('-').map(Number)
