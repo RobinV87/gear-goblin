@@ -8,6 +8,13 @@ const forms: Record<string, FormFactor> = {
   'RG28XX': 'horizontal', 'RG34XX': 'horizontal', 'RG35XX H': 'horizontal', 'RG40XX H': 'horizontal', 'RG280M': 'horizontal', 'RG300X': 'horizontal', 'RG350': 'horizontal', 'RG350M': 'horizontal', 'RG350P': 'horizontal', 'RG351M': 'horizontal', 'RG351MP': 'horizontal', 'RG351P': 'horizontal', 'RG353M': 'horizontal', 'RG353P': 'horizontal', 'RG353PS': 'horizontal', 'RG405M': 'horizontal', 'RG406H': 'horizontal', 'RG476H': 'horizontal', 'RG477M': 'horizontal', 'RG503': 'horizontal', 'RG505': 'horizontal', 'RG552': 'horizontal', 'RG556': 'horizontal', 'RG557': 'horizontal', 'RG ARC-D': 'horizontal', 'RG ARC-S': 'horizontal', 'RG Cube': 'horizontal', 'RG CubeXX': 'horizontal', 'Win600': 'horizontal',
 }
 export function getFormFactor(manufacturer: string, model: string): FormFactor {
+  if (manufacturer.trim().toLowerCase() === 'retroid') {
+    const name = model.trim().toLowerCase()
+    if (['pocket flip', 'pocket flip 2', 'pocket duo', 'pocket duo lite'].includes(name)) return 'clamshell'
+    if (['pocket', 'pocket classic'].includes(name)) return 'vertical'
+    if (['pocket 2', 'pocket 2+', 'pocket 2s', 'pocket 3', 'pocket 3+', 'pocket 4', 'pocket 4 pro', 'pocket mini', 'pocket mini v2', 'pocket 5', 'pocket 6', 'pocket g2', 'pocket nova'].includes(name)) return 'horizontal'
+    return 'unknown'
+  }
   if (manufacturer.trim().toLowerCase() !== 'anbernic') return 'unknown'
   const name = Object.keys(forms).find(key => key.toLowerCase() === model.trim().toLowerCase())
   return name ? forms[name] : 'unknown'
