@@ -19,3 +19,11 @@ describe('device repository', () => {
     expect(await repo.list()).toEqual([])
   })
 })
+
+it('preserves an optional purchase date when saving and updating a device', async () => {
+  const repo = new BrowserDeviceRepository(crypto.randomUUID())
+  const device = await repo.create({ ...input, purchaseDate: '2024-03-12' })
+  expect((await repo.list())[0].purchaseDate).toBe('2024-03-12')
+  await repo.update(device.id, { ...input, purchaseDate: '2024-04-01' })
+  expect((await repo.list())[0].purchaseDate).toBe('2024-04-01')
+})

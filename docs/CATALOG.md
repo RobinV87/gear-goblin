@@ -1,0 +1,7 @@
+# Handheld catalog
+
+The Anbernic starter catalog is bundled with the app and works offline. It is a curated, incomplete selection, not a live scraper. Model names and approximate release months were checked against [HandheldWiki's Anbernic index](https://handheldwiki.com/brand/anbernic/) on 2026-11-26. Release months are reference information, not exact dates or proof of ownership. Manufacturers can release in different regions on different dates.
+
+Sources disagree on the original RG35XX: [Anbernic's own series guide](https://anbernic.com/en-au/blogs/news/differences-and-similarities-about-rg35xx-series) says 2023, while the catalog lists December 2022. Its release date is therefore intentionally unset. The RG35XX and RG35XX 2024 are separate entries. Users can always enter a model manually, including revisions missing here. Catalog facts are looked up at display time; existing device records are not rewritten when catalog data changes.
+
+Possible later additions include display size and resolution, chipset, memory, battery, dimensions, wireless connectivity, ports and stock operating system, verified against individual manufacturer product pages. Specifications can differ by hardware revision; show source and revision, allow corrections, and distinguish stock specs from the owner's actual configuration. Prices, availability and firmware change over time. Purchase date, serial number, custom firmware, SD cards, condition, and modifications must come from the owner. Do not copy product photography or logos without permission.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added an offline Anbernic starter catalog and optional purchase dates for handhelds.
 - Redesigned the collection as a compact handheld archive with responsive navigation, collectible cards, and device dossiers.
 - Refreshed forms and empty states with an original retro-electronics visual language.
 
