@@ -118,3 +118,9 @@ h1 { font-size: clamp(38px, 9vw, 56px); line-height: .98; margin: 12px 0 9px; }
 .dialog select { width: 100%; display: block; margin-top: 7px; padding: 12px; min-height: 46px; border: 1px solid #8c9d8d; border-radius: 2px; background: #fffdf7; color: var(--ink); font-size: 16px; }
 .dialog select:focus-visible { outline: 3px solid #b14d16; outline-offset: 3px; }
 .optional { color: #647166; font-weight: 400; }
+.hardware-panel { border: 1px solid #aebbac; background: var(--surface); padding: 18px 20px; }
+.hardware-panel > p { color: #59685d; font-size: 13px; margin-bottom: 14px; }
+.hardware-panel dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); column-gap: 24px; }
+.hardware-panel dl div { padding: 10px 0; border-top: 1px solid #d8dfd2; display: grid; grid-template-columns: 85px 1fr; gap: 8px; font-size: 13px; }
+.hardware-panel dt { color: #59685d; }.hardware-panel dd { margin: 0; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.hardware-panel a { display: inline-flex; gap: 4px; align-items: center; margin-top: 16px; color: #375a43; font-size: 13px; font-weight: 700; }
