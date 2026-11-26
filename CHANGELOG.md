@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added local firmware history, storage, accessories, and modifications with a versioned database upgrade.
+
 - Expanded manufacturer-sourced hardware reference data across the Anbernic starter catalog.
 
 - Added an offline Anbernic starter catalog and optional purchase dates for handhelds.

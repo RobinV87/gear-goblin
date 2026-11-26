@@ -240,3 +240,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
   .specimen-large { height: 350px; }
 }
 @media (min-width: 1100px) { .specimen-large { height: 380px; } }
+.workshop-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); }
+.workshop-panel { background: #222729; border: 1px solid #6a6858; border-radius: 10px; padding: 18px; min-width: 0; }
+.workshop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.workshop-head h3 { font-size: 19px; }.workshop-head .button { min-height: 40px; padding: 0 10px; }
+.workshop-empty { color: #c1c9bd; font-size: 13px; padding-top: 18px; }
+.workshop-list { list-style: none; padding: 0; margin: 12px 0 0; }
+.workshop-list li { border-top: 1px solid #50594e; padding: 12px 0; display: flex; gap: 12px; justify-content: space-between; }
+.workshop-list strong { overflow-wrap: anywhere; }.workshop-list p { color: #c2cbbd; font-size: 12px; margin-top: 4px; }
+.record-actions { display: flex; flex-shrink: 0; align-items: start; gap: 8px; }.record-actions button { min-height: 40px; padding: 6px; background: transparent; border: 0; color: #ffc186; text-decoration: underline; }
+.index-records { margin-top: 15px; }.index-records button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 0; background: transparent; border: 0; border-top: 1px solid #667363; color: #f5efe4; text-align: left; }.index-records button strong { flex: 1; }.index-records button span { color: #c2cbbd; font-size: 12px; }

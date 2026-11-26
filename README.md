@@ -2,9 +2,9 @@
 
 **Your handheld hoard, organized.** A free, offline-first digital garage for retro gaming handhelds. No account, advertisements, analytics, or online service.
 
-## Milestone 1A
+## Current milestone
 
-Create, edit, list and delete basic handheld profiles in a browser, with local IndexedDB storage. Collection and device views offer grid and list layouts. Firmware, storage and settings navigation is in place; these sections describe planned work. Data is local to the browser profile and can be lost if site data is cleared. Backup is not implemented yet; do not use this milestone as the sole record of a collection.
+Create, edit, list and delete basic handheld profiles in a browser, with local IndexedDB storage. Collection and device views offer grid and list layouts. Track firmware installations, storage configurations, accessories and modifications for each device. Firmware and storage sections provide an index of your handhelds. Data is local to the browser profile and can be lost if site data is cleared. Backup is not implemented yet; do not use this milestone as the sole record of a collection.
 
 ## Development
 
@@ -24,7 +24,7 @@ Device data remains in local browser storage. No serial numbers or purchase deta
 
 ## Roadmap
 
-- 1B: firmware history, storage, accessories and modifications.
+- 1B: firmware history, storage, accessories and modifications (browser implementation).
 - 1C: versioned native database, complete validated backup and transactional restore.
 - 1D: Android packaging, usability, documentation and release preparation.
 - Later: model catalog, comparisons, QR labels, repair reminders, statistics, wishlist, optional donations and synchronization, desktop app, and advanced configuration management.
