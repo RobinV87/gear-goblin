@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { Gamepad2, Pencil, Trash2, X } from 'lucide-react'
 import { Workshop } from '../workshop/Workshop'
+import { DevicePhotoSettings } from './DevicePhotoSettings'
 import { ModelSpecifications } from './ModelSpecifications'
 import type { Device } from './model'
 
@@ -51,6 +52,7 @@ export function DeviceDetails({ device, error, onClose, onEdit, onDelete }: Devi
             <div><dt>Color or variant</dt><dd>{device.variant || '—'}</dd></div>
             <div><dt>Notes</dt><dd className="notes">{device.notes || '—'}</dd></div>
           </dl>
+          <DevicePhotoSettings key={device.id} deviceId={device.id} />
         </section>
         <ModelSpecifications manufacturer={device.manufacturer} model={device.model} expanded />
       </div>
