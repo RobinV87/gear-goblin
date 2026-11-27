@@ -230,3 +230,12 @@ select:focus-visible { outline: 3px solid #288896; outline-offset: 3px; }
   .device-workshop { padding: 0 16px 16px; }
   .workshop-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.backup-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.backup-panel input[hidden], .device-photo-panel input[hidden] { display: none; }
+.backup-panel button:disabled, .device-photo-panel button:disabled { opacity: .6; cursor: wait; }
+.restore-preview { margin-top: 20px; padding: 16px; border: 1px solid #bdc9b9; border-radius: 12px; background: #f7f6ed; }
+.restore-preview h3 { margin-top: 0; }
+.device-photo-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid #c7d0c1; }
+.device-photo-panel .secondary { padding: 7px 10px; font-size: 13px; }
+.device-photo-preview { display: block; width: 100%; max-height: 240px; object-fit: contain; background: #e4ecd9; border-radius: 8px; margin-top: 10px; }
