@@ -1,8 +1,8 @@
-import { getAnbernicSpecs } from './anbernicModels'
+import { getHandheldSpecs } from './handheldCatalog'
 import type { DeviceInput } from './model'
 
 export function ModelSpecifications({ manufacturer, model }: Pick<DeviceInput, 'manufacturer' | 'model'>) {
-  const specs = getAnbernicSpecs(manufacturer, model)
+  const specs = getHandheldSpecs(manufacturer, model)
   if (!specs) return null
 
   const rows = [
@@ -20,7 +20,7 @@ export function ModelSpecifications({ manufacturer, model }: Pick<DeviceInput, '
     <details className="model-specifications">
       <summary>Model specs</summary>
       <dl>
-        {rows.map(([label, value]) => (
+        {rows.filter(([, value]) => value).map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>
             <dd>{value}</dd>
