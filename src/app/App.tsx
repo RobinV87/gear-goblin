@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Boxes, Gamepad2, HardDrive, Plus, Settings, Smartphone, Wrench, LayoutGrid, List, Pencil, Trash2, X } from 'lucide-react'
+import { SuggestedField } from '../features/devices/SuggestedField'
 import { anbernicModels } from '../features/devices/anbernicModels'
 import { type Device, type DeviceInput } from '../features/devices/model'
 import { deviceRepository } from '../services/deviceRepository'
@@ -9,29 +10,25 @@ const sections: { name: Section; icon: typeof Boxes }[] = [{ name: 'Collection',
 const empty: DeviceInput = { manufacturer: '', model: '', nickname: '', variant: '', notes: '' }
 function Goblin() { return <svg className="goblin" viewBox="0 0 100 100" aria-hidden="true"><path fill="#90a67c" d="M25 36 5 22l9 30c-2 25 14 38 36 38s38-13 36-38l9-30-20 14C62 24 38 24 25 36Z"/><path fill="#29352a" d="M28 52c5-5 12-5 17 0l-3 8-11-1zm27 0c5-5 12-5 17 0l-3 7-11 1z"/><path d="M40 72q10 7 20 0" fill="none" stroke="#29352a" strokeWidth="4" strokeLinecap="round"/></svg> }
 function DeviceForm({ device, close, saved }: { device: Device | null; close: () => void; saved: () => Promise<void> }) {
-  const catalogId = useId()
   const [form, setForm] = useState<DeviceInput>(device ?? empty)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   async function submit(event: FormEvent) { event.preventDefault(); setSaving(true); setError(''); try { if (device) await deviceRepository.update(device.id, form); else await deviceRepository.create(form); await saved(); close() } catch { setError('Could not save this device. Check the required fields and try again.') } finally { setSaving(false) } }
   const isAnbernic = form.manufacturer.trim().toLowerCase() === 'anbernic'
   function field(key: keyof DeviceInput, label: string, required = false, suggestions?: readonly string[]) {
-    const listId = `${catalogId}-${key}`
+    if (suggestions) {
+      return <SuggestedField label={label} value={form[key]} suggestions={suggestions}
+        onChange={value => setForm(current => ({ ...current, [key]: value }))} />
+    }
     return (
       <label>
         {label}{required && ' *'}
         <input
           required={required}
-          list={suggestions && listId}
           maxLength={120}
           value={form[key]}
           onChange={event => setForm(current => ({ ...current, [key]: event.target.value }))}
         />
-        {suggestions && (
-          <datalist id={listId}>
-            {suggestions.map(value => <option key={value} value={value} />)}
-          </datalist>
-        )}
       </label>
     )
   }
