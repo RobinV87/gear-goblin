@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
 import { Boxes, Gamepad2, HardDrive, Plus, Settings, Smartphone, Wrench, LayoutGrid, List, Pencil, Trash2, X } from 'lucide-react'
+import { anbernicModels } from '../features/devices/anbernicModels'
 import { type Device, type DeviceInput } from '../features/devices/model'
 import { deviceRepository } from '../services/deviceRepository'
 
@@ -8,12 +9,33 @@ const sections: { name: Section; icon: typeof Boxes }[] = [{ name: 'Collection',
 const empty: DeviceInput = { manufacturer: '', model: '', nickname: '', variant: '', notes: '' }
 function Goblin() { return <svg className="goblin" viewBox="0 0 100 100" aria-hidden="true"><path fill="#90a67c" d="M25 36 5 22l9 30c-2 25 14 38 36 38s38-13 36-38l9-30-20 14C62 24 38 24 25 36Z"/><path fill="#29352a" d="M28 52c5-5 12-5 17 0l-3 8-11-1zm27 0c5-5 12-5 17 0l-3 7-11 1z"/><path d="M40 72q10 7 20 0" fill="none" stroke="#29352a" strokeWidth="4" strokeLinecap="round"/></svg> }
 function DeviceForm({ device, close, saved }: { device: Device | null; close: () => void; saved: () => Promise<void> }) {
+  const catalogId = useId()
   const [form, setForm] = useState<DeviceInput>(device ?? empty)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   async function submit(event: FormEvent) { event.preventDefault(); setSaving(true); setError(''); try { if (device) await deviceRepository.update(device.id, form); else await deviceRepository.create(form); await saved(); close() } catch { setError('Could not save this device. Check the required fields and try again.') } finally { setSaving(false) } }
-  function field(key: keyof DeviceInput, label: string, required = false) { return <label>{label}{required && ' *'}<input required={required} maxLength={120} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} /></label> }
-  return <div className="overlay"><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="form-title"><div className="dialog-head"><div><span className="eyebrow">YOUR COLLECTION</span><h2 id="form-title">{device ? 'Edit handheld' : 'Add a handheld'}</h2></div><button className="icon-button" aria-label="Close" onClick={close}><X /></button></div><form onSubmit={submit}><div className="fields">{field('manufacturer', 'Manufacturer', true)}{field('model', 'Model', true)}{field('nickname', 'Nickname')}{field('variant', 'Color or variant')}</div><label>Notes<textarea rows={3} maxLength={5000} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></label>{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving}>{saving ? 'Saving…' : 'Save handheld'}</button></div></form></section></div>
+  const isAnbernic = form.manufacturer.trim().toLowerCase() === 'anbernic'
+  function field(key: keyof DeviceInput, label: string, required = false, suggestions?: readonly string[]) {
+    const listId = `${catalogId}-${key}`
+    return (
+      <label>
+        {label}{required && ' *'}
+        <input
+          required={required}
+          list={suggestions && listId}
+          maxLength={120}
+          value={form[key]}
+          onChange={event => setForm(current => ({ ...current, [key]: event.target.value }))}
+        />
+        {suggestions && (
+          <datalist id={listId}>
+            {suggestions.map(value => <option key={value} value={value} />)}
+          </datalist>
+        )}
+      </label>
+    )
+  }
+  return <div className="overlay"><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="form-title"><div className="dialog-head"><div><span className="eyebrow">YOUR COLLECTION</span><h2 id="form-title">{device ? 'Edit handheld' : 'Add a handheld'}</h2></div><button className="icon-button" aria-label="Close" onClick={close}><X /></button></div><form onSubmit={submit}><div className="fields">{field('manufacturer', 'Manufacturer', true, ['Anbernic'])}{field('model', 'Model', true, isAnbernic ? anbernicModels : undefined)}{field('nickname', 'Nickname')}{field('variant', 'Color or variant')}</div><label>Notes<textarea rows={3} maxLength={5000} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></label>{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving}>{saving ? 'Saving…' : 'Save handheld'}</button></div></form></section></div>
 }
 export default function App() {
   const [section, setSection] = useState<Section>('Collection'); const [devices, setDevices] = useState<Device[]>([]); const [editing, setEditing] = useState<Device | null | undefined>(undefined); const [view, setView] = useState<'grid' | 'list'>('grid'); const [error, setError] = useState(''); const [loading, setLoading] = useState(true)
