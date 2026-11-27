@@ -15,7 +15,8 @@ export function SuggestedField({ label, value, suggestions, onChange }: Suggeste
   const [active, setActive] = useState(-1)
   const query = value.trim().toLowerCase()
   const matches = suggestions.filter(option => option.toLowerCase().includes(query))
-  const expanded = open && matches.length > 0
+  const canSuggest = matches.length > 0 && !matches.some(option => option.toLowerCase() === query)
+  const expanded = open && canSuggest
 
   function close() {
     setOpen(false)
@@ -36,7 +37,7 @@ export function SuggestedField({ label, value, suggestions, onChange }: Suggeste
       event.preventDefault()
       select(matches[active])
     }
-    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && matches.length > 0) {
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && canSuggest) {
       event.preventDefault()
       const next = event.key === 'ArrowDown'
         ? Math.min(active + 1, matches.length - 1)
