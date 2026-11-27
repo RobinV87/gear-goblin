@@ -111,3 +111,23 @@ input, textarea { background: #f7f6ed; border: 2px solid #87978a; border-radius:
 }
 .suggested-field-options li:hover,
 .suggested-field-options li[aria-selected="true"] { background: #dce7d5; }
+
+.model-specifications {
+  margin: 12px 0 16px;
+  padding: 10px 12px;
+  border: 1px solid #87978a;
+  border-radius: 10px;
+  background: #f7f6ed;
+  color: var(--ink);
+  font-size: 13px;
+}
+.model-specifications summary { cursor: pointer; font-weight: 750; }
+.model-specifications dl { display: grid; gap: 8px; margin: 12px 0; }
+.model-specifications dl div {
+  display: grid;
+  grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
+  gap: 8px;
+}
+.model-specifications dt { font-weight: 700; }
+.model-specifications dd { margin: 0; overflow-wrap: anywhere; }
+.model-specifications a { color: inherit; text-underline-offset: 2px; }
