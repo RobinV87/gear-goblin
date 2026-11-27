@@ -1,21 +1,26 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Gamepad2, Pencil, Trash2, X } from 'lucide-react'
 import { Workshop } from '../workshop/Workshop'
 import { DevicePhotoSettings } from './DevicePhotoSettings'
+import { ModelGuides } from './ModelGuides'
+import { SetupCopy } from './SetupCopy'
 import { ModelSpecifications } from './ModelSpecifications'
 import type { Device } from './model'
 
 interface DeviceDetailsProps {
   device: Device
+  devices: Device[]
+  onSetupCopied: () => Promise<void>
   error: string
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
 }
 
-export function DeviceDetails({ device, error, onClose, onEdit, onDelete }: DeviceDetailsProps) {
+export function DeviceDetails({ device, devices, onSetupCopied, error, onClose, onEdit, onDelete }: DeviceDetailsProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
+  const [setupRevision, setSetupRevision] = useState(0)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -56,7 +61,14 @@ export function DeviceDetails({ device, error, onClose, onEdit, onDelete }: Devi
         </section>
         <ModelSpecifications manufacturer={device.manufacturer} model={device.model} expanded />
       </div>
-      <div className="device-workshop"><Workshop key={device.id} deviceId={device.id} /></div>
+      <div className="device-workshop">
+        <Workshop key={device.id} deviceId={device.id} setupRevision={setupRevision} />
+        <SetupCopy deviceId={device.id} devices={devices} onCopied={() => {
+          setSetupRevision(revision => revision + 1)
+          void onSetupCopied()
+        }} />
+        <ModelGuides manufacturer={device.manufacturer} model={device.model} />
+      </div>
       {error && <p className="error" role="alert">{error}</p>}
       <footer className="device-details-footer">
         <button className="device-delete" onClick={onDelete}><Trash2 size={16} aria-hidden="true" /> Delete handheld</button>

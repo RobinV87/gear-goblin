@@ -10,9 +10,9 @@ const text = z.string().max(5000)
 const timestamp = z.iso.datetime({ offset: true })
 const calendarDate = z.union([z.literal(''), z.iso.date()])
 const device = z.object({ id: uuid, manufacturer: text.refine(value => value.trim().length > 0), model: text.refine(value => value.trim().length > 0), nickname: text, variant: text, notes: text, purchaseDate: calendarDate.optional(), createdAt: timestamp, updatedAt: timestamp }).strict()
-const record = z.object({ id: uuid, deviceId: uuid, kind: z.enum(['firmware','storage','accessory','modification']), name: text.refine(value => value.trim().length > 0), version: text, date: calendarDate, previousFirmware: text, succeeded: z.boolean(), capacity: text, purpose: text, notes: text, createdAt: timestamp }).strict()
+const record = z.object({ id: uuid, deviceId: uuid, kind: z.enum(['firmware','storage','accessory','modification','maintenance']), name: text.refine(value => value.trim().length > 0), version: text, date: calendarDate, previousFirmware: text, succeeded: z.boolean(), capacity: text, purpose: text, notes: text, followUpDate: calendarDate.optional(), createdAt: timestamp }).strict()
 const image = z.object({ deviceId: uuid, mime: z.enum(['image/jpeg','image/png','image/webp']), path: z.string().max(100) }).strict()
-const manifest = z.object({ format: z.literal('gear-goblin-backup'), version: z.literal(1), exportedAt: timestamp, devices: z.array(device).max(10000), records: z.array(record).max(100000), images: z.array(image).max(10000) }).strict()
+const manifest = z.object({ format: z.literal('gear-goblin-backup'), version: z.union([z.literal(1), z.literal(2)]), exportedAt: timestamp, devices: z.array(device).max(10000), records: z.array(record).max(100000), images: z.array(image).max(10000) }).strict()
 
 function crc32(bytes: Uint8Array): number {
   let crc = 0xffffffff
@@ -55,7 +55,7 @@ export function createBackup(snapshot: CollectionSnapshot): Uint8Array {
     const path = `images/${item.deviceId}.${ext}`; files[path] = item.data
     return { deviceId: item.deviceId, mime: item.mime, path }
   })
-  const payload = manifest.parse({ format: 'gear-goblin-backup', version: 1, exportedAt: new Date().toISOString(), devices: snapshot.devices, records: snapshot.records, images })
+  const payload = manifest.parse({ format: 'gear-goblin-backup', version: 2, exportedAt: new Date().toISOString(), devices: snapshot.devices, records: snapshot.records, images })
   files['manifest.json'] = strToU8(JSON.stringify(payload))
   if (files['manifest.json'].length > maxManifest ||
       Object.values(files).reduce((size, file) => size + file.length, 0) > maxArchive) {
@@ -69,6 +69,9 @@ export function readBackup(data: Uint8Array): CollectionSnapshot {
   try {
     const paths = inspectZip(data), files = unzipSync(data)
     const parsed = manifest.parse(JSON.parse(strFromU8(files['manifest.json'])))
+    if (parsed.version === 1 && parsed.records.some(record => record.kind === 'maintenance' || record.followUpDate !== undefined)) {
+      throw new Error('Unsupported version 1 entry.')
+    }
     const ids = new Set(parsed.devices.map(d => d.id)), recordIds = new Set(parsed.records.map(r => r.id)), imageIds = new Set(parsed.images.map(i => i.deviceId))
     if (ids.size !== parsed.devices.length || recordIds.size !== parsed.records.length || imageIds.size !== parsed.images.length || parsed.records.some(r => !ids.has(r.deviceId)) || parsed.images.some(i => !ids.has(i.deviceId))) throw new Error('Duplicate or orphaned records.')
     const expected = new Set(['manifest.json', ...parsed.images.map(i => i.path)])

@@ -38,3 +38,22 @@ describe('workshop records', () => {
     expect(await repo.listRecords()).toEqual([])
   })
 })
+
+it('copies setup data once without overwriting slots or copying firmware and maintenance', async () => {
+  const repo = new BrowserDeviceRepository(crypto.randomUUID())
+  const source = await repo.create({ ...device, notes: 'Use a separate games card.' })
+  const target = await repo.create({ ...device, notes: 'Existing notes.' })
+  await repo.saveRecord(source.id, { ...newWorkshopInput('storage'), name: 'TF1', capacity: '32 GB' })
+  await repo.saveRecord(source.id, { ...newWorkshopInput('storage'), name: 'TF2', capacity: '128 GB' })
+  await repo.saveRecord(source.id, { ...newWorkshopInput('accessory'), name: 'Case' })
+  await repo.saveRecord(source.id, { ...newWorkshopInput('firmware'), name: 'Rocknix' })
+  await repo.saveRecord(source.id, { ...newWorkshopInput('maintenance'), name: 'Battery swap', followUpDate: '2027-01-01' })
+  await repo.saveRecord(target.id, { ...newWorkshopInput('storage'), name: 'tf1', capacity: '64 GB' })
+
+  await Promise.all([repo.copySetup(source.id, target.id), repo.copySetup(source.id, target.id)])
+  const entries = await repo.listRecords(target.id)
+  expect(entries.map(entry => entry.name).sort()).toEqual(['Case', 'TF2', 'tf1'])
+  expect(entries.find(entry => entry.name === 'tf1')?.capacity).toBe('64 GB')
+  expect((await repo.list()).find(item => item.id === target.id)?.notes).toBe('Existing notes.\n\nUse a separate games card.')
+  expect(await repo.listRecords(source.id)).toHaveLength(5)
+})

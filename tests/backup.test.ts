@@ -64,3 +64,20 @@ it('upgrades an existing version 2 collection without losing device records', as
   expect((await repo.listRecords(id)).map(record => record.name)).toEqual(['Case'])
   expect((await repo.snapshot()).images).toEqual([])
 })
+
+it('reads version 1 backups and restores maintenance follow-up dates in version 2', async () => {
+  const repo = new BrowserDeviceRepository(crypto.randomUUID())
+  const device = await repo.create(input)
+  const original = await repo.snapshot()
+  const files = unzipSync(createBackup(original))
+  const manifest = JSON.parse(strFromU8(files['manifest.json']))
+  manifest.version = 1
+  files['manifest.json'] = strToU8(JSON.stringify(manifest))
+  expect(readBackup(zipSync(files, { level: 0 }))).toEqual(original)
+
+  await repo.saveRecord(device.id, {
+    ...newWorkshopInput('maintenance'), name: 'Battery swap', followUpDate: '2027-01-01',
+  })
+  const snapshot = await repo.snapshot()
+  expect(readBackup(createBackup(snapshot))).toEqual(snapshot)
+})

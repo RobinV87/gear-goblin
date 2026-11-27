@@ -1,4 +1,4 @@
-export type RecordKind = 'firmware' | 'storage' | 'accessory' | 'modification'
+export type RecordKind = 'firmware' | 'storage' | 'accessory' | 'modification' | 'maintenance'
 export interface WorkshopRecord {
   id: string
   deviceId: string
@@ -11,6 +11,7 @@ export interface WorkshopRecord {
   capacity: string
   purpose: string
   notes: string
+  followUpDate?: string
   createdAt: string
 }
 export type WorkshopInput = Omit<WorkshopRecord, 'id' | 'deviceId' | 'createdAt'>

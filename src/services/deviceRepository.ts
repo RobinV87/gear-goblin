@@ -11,6 +11,7 @@ export interface DeviceRepository {
   listRecords(deviceId?: string): Promise<WorkshopRecord[]>
   saveRecord(deviceId: string, input: WorkshopInput, id?: string): Promise<void>
   deleteRecord(id: string): Promise<void>
+  copySetup(sourceId: string, targetId: string): Promise<void>
   snapshot(): Promise<CollectionSnapshot>
   restore(snapshot: CollectionSnapshot): Promise<void>
   getImage(deviceId: string): Promise<DeviceImage | undefined>
@@ -60,6 +61,40 @@ export class BrowserDeviceRepository implements DeviceRepository {
     })
   }
   async deleteRecord(id: string) { await this.db.records.delete(id) }
+  async copySetup(sourceId: string, targetId: string) {
+    if (sourceId === targetId) throw new Error('Choose a different handheld.')
+    await this.db.transaction('rw', this.db.devices, this.db.records, async () => {
+      const [source, target] = await this.db.devices.bulkGet([sourceId, targetId])
+      if (!source || !target) throw new Error('Handheld no longer exists.')
+
+      const [sourceRecords, targetRecords] = await Promise.all([
+        this.db.records.where('deviceId').equals(sourceId).toArray(),
+        this.db.records.where('deviceId').equals(targetId).toArray(),
+      ])
+      const recordKey = (record: WorkshopRecord) => `${record.kind}:${record.name.trim().toLowerCase()}`
+      const existing = new Set(targetRecords.map(recordKey))
+      const now = new Date().toISOString()
+      const additions: WorkshopRecord[] = []
+      for (const record of sourceRecords) {
+        if (record.kind !== 'storage' && record.kind !== 'accessory') continue
+        const key = recordKey(record)
+        if (existing.has(key)) continue
+        additions.push({ ...record, id: crypto.randomUUID(), deviceId: targetId, createdAt: now })
+        existing.add(key)
+      }
+
+      const notes = source.notes.trim()
+      const currentNotes = target.notes.trim()
+      const blocks = currentNotes.split(/\n{2,}/)
+      const alreadyCopied = `\n\n${blocks.join('\n\n')}\n\n`.includes(`\n\n${notes.replace(/\n{2,}/g, '\n\n')}\n\n`)
+      const nextNotes = notes && !alreadyCopied ? [target.notes.trimEnd(), notes].filter(Boolean).join('\n\n') : target.notes
+      if (nextNotes.length > 5000) throw new Error('The combined notes exceed 5,000 characters.')
+      if (additions.length) await this.db.records.bulkAdd(additions)
+      if (additions.length || nextNotes !== target.notes) {
+        await this.db.devices.update(targetId, { notes: nextNotes, updatedAt: now })
+      }
+    })
+  }
   async snapshot(): Promise<CollectionSnapshot> {
     return this.db.transaction('r', this.db.devices, this.db.records, this.db.images, async () => ({ devices: await this.db.devices.toArray(), records: await this.db.records.toArray(), images: await this.db.images.toArray() }))
   }
