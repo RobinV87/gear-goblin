@@ -1,9 +1,17 @@
 import { useRef, useState } from 'react'
-import { Download, Upload } from 'lucide-react'
+import { Download, FolderOpen, Share2, Upload } from 'lucide-react'
 import { deviceRepository, type CollectionSnapshot } from '../../services/deviceRepository'
 import { createBackup, maxArchive, readBackup } from './backup'
 
+interface SavePickerWindow extends Window {
+  showSaveFilePicker?: (options: {
+    suggestedName: string
+    types: { description: string; accept: Record<string, string[]> }[]
+  }) => Promise<FileSystemFileHandle>
+}
+
 export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
+  const [prepared, setPrepared] = useState<File | null>(null)
   const [pending, setPending] = useState<CollectionSnapshot | null>(null)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -16,19 +24,71 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
     setError('')
   }
 
-  async function exportFile() {
+  const savePicker = (window as SavePickerWindow).showSaveFilePicker
+  const canShareFiles = typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
+
+  function download(file: File) {
+    const url = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.name
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    setStatus('Backup download started.')
+  }
+
+  async function exportFile(chooseDestination = false) {
     start()
+    setPrepared(null)
     try {
       const bytes = createBackup(await deviceRepository.snapshot())
-      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'application/zip' }))
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `gear-goblin-${new Date().toISOString().slice(0, 10)}.zip`
-      link.click()
-      setTimeout(() => URL.revokeObjectURL(url), 60_000)
-      setStatus('Backup ready to download.')
+      const name = `gear-goblin-${new Date().toISOString().slice(0, 10)}.zip`
+      const file = new File([new Uint8Array(bytes)], name, { type: 'application/zip' })
+      if (chooseDestination) setPrepared(file)
+      else download(file)
     } catch {
       setError('Could not create a backup. The ZIP limit is 50 MB.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function saveToLocation(file: File) {
+    if (!savePicker) return
+    start()
+    try {
+      const handle = await savePicker.call(window, {
+        suggestedName: file.name,
+        types: [{ description: 'Gear Goblin backup', accept: { 'application/zip': ['.zip'] } }],
+      })
+      const writer = await handle.createWritable()
+      try {
+        await writer.write(file)
+        await writer.close()
+      } catch (error) {
+        await writer.abort().catch(() => undefined)
+        throw error
+      }
+      setPrepared(null)
+      setStatus('Backup saved.')
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        setError('Could not save to that location. Try a different location or download the ZIP.')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function shareFile(file: File) {
+    start()
+    try {
+      await navigator.share({ files: [file] })
+      setPrepared(null)
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        setError('Could not share this backup. You can still download the ZIP.')
+      }
     } finally {
       setBusy(false)
     }
@@ -37,6 +97,7 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
   async function choose(file: File) {
     start()
     setPending(null)
+    setPrepared(null)
     try {
       if (file.size > maxArchive) {
         setError('Choose a Gear Goblin backup ZIP up to 50 MB.')
@@ -68,9 +129,12 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
   return (
     <section className="placeholder backup-panel">
       <h2>Backup &amp; restore</h2>
-      <p>Save an unencrypted ZIP with your handhelds, workshop entries, and photos.</p>
+      <p>Your collection saves in this browser. Export an unencrypted ZIP to keep a copy of your handhelds, workshop entries, and photos somewhere you choose.</p>
       <div className="backup-actions">
         <button className="primary" disabled={busy} onClick={() => void exportFile()}><Download size={17} aria-hidden="true" /> Export collection</button>
+        {(savePicker || canShareFiles) && <button className="secondary" disabled={busy} onClick={() => void exportFile(true)}>
+          <FolderOpen size={17} aria-hidden="true" /> Choose where to save
+        </button>}
         <button className="secondary" disabled={busy} onClick={() => picker.current?.click()}><Upload size={17} aria-hidden="true" /> Choose backup</button>
         <input ref={picker} type="file" aria-label="Backup ZIP" accept=".zip,application/zip" hidden onChange={event => {
           const file = event.currentTarget.files?.[0]
@@ -78,6 +142,25 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
           if (file) void choose(file)
         }} />
       </div>
+      {prepared && <div className="restore-preview">
+        <h3>Save backup</h3>
+        <p>{prepared.name}</p>
+        <div className="backup-actions">
+          {savePicker && <button className="primary" disabled={busy} onClick={() => void saveToLocation(prepared)}>
+            <FolderOpen size={17} aria-hidden="true" /> Save backup as
+          </button>}
+          {canShareFiles && navigator.canShare({ files: [prepared] }) &&
+            <button className="secondary" disabled={busy} onClick={() => void shareFile(prepared)}>
+              <Share2 size={17} aria-hidden="true" /> Share backup
+            </button>}
+          <button className="secondary" disabled={busy} onClick={() => {
+            setError('')
+            download(prepared)
+            setPrepared(null)
+          }}>Download ZIP</button>
+          <button className="secondary" disabled={busy} onClick={() => setPrepared(null)}>Cancel</button>
+        </div>
+      </div>}
       {pending && <div className="restore-preview">
         <h3>Ready to restore</h3>
         <p>Handhelds: {pending.devices.length} · Workshop entries: {pending.records.length} · Photos: {pending.images.length}</p>
