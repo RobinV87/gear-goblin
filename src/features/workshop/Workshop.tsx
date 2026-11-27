@@ -8,10 +8,11 @@ const categories = {
   firmware: { title: 'Firmware history', entry: 'firmware entry', name: 'Firmware name' },
   storage: { title: 'Storage configuration', entry: 'storage entry', name: 'Slot or label' },
   accessory: { title: 'Accessories', entry: 'accessory', name: 'Accessory name' },
+  maintenance: { title: 'Maintenance log', entry: 'maintenance entry', name: 'Repair or issue' },
   modification: { title: 'Modifications', entry: 'modification', name: 'Modification name' },
 } satisfies Record<RecordKind, { title: string; entry: string; name: string }>
 
-const allKinds: RecordKind[] = ['firmware', 'storage', 'accessory', 'modification']
+const allKinds: RecordKind[] = ['firmware', 'storage', 'accessory', 'modification', 'maintenance']
 
 function RecordForm({ kind, record, close, save }: {
   kind: RecordKind
@@ -45,12 +46,12 @@ function RecordForm({ kind, record, close, save }: {
     }
   }
 
-  function field(key: 'name' | 'version' | 'date' | 'previousFirmware' | 'capacity' | 'purpose', label: string) {
+  function field(key: 'name' | 'version' | 'date' | 'previousFirmware' | 'capacity' | 'purpose' | 'followUpDate', label: string) {
     return (
       <label>
         {label}
-        <input type={key === 'date' ? 'date' : 'text'} required={key === 'name'} maxLength={120}
-          value={form[key]} onChange={event => setForm({ ...form, [key]: event.target.value })} />
+        <input type={key === 'date' || key === 'followUpDate' ? 'date' : 'text'} required={key === 'name'} maxLength={120}
+          value={form[key] ?? ''} onChange={event => setForm({ ...form, [key]: event.target.value })} />
       </label>
     )
   }
@@ -81,7 +82,8 @@ function RecordForm({ kind, record, close, save }: {
             </label>
           </>}
           {kind === 'storage' && <>{field('capacity', 'Capacity')}{field('purpose', 'Purpose')}</>}
-          {kind === 'modification' && field('date', 'Date')}
+          {(kind === 'modification' || kind === 'maintenance') && field('date', 'Date')}
+          {kind === 'maintenance' && field('followUpDate', 'Follow-up date')}
         </div>
         <label>
           Notes
@@ -98,7 +100,7 @@ function RecordForm({ kind, record, close, save }: {
   )
 }
 
-export function Workshop({ deviceId, kind }: { deviceId: string; kind?: RecordKind }) {
+export function Workshop({ deviceId, kind, setupRevision }: { deviceId: string; kind?: RecordKind; setupRevision?: number }) {
   const [records, setRecords] = useState<WorkshopRecord[] | null>(null)
   const [editing, setEditing] = useState<{ kind: RecordKind; record?: WorkshopRecord } | null>(null)
   const [error, setError] = useState('')
@@ -111,7 +113,7 @@ export function Workshop({ deviceId, kind }: { deviceId: string; kind?: RecordKi
       if (active) setError('Could not load workshop entries.')
     })
     return () => { active = false }
-  }, [deviceId])
+  }, [deviceId, setupRevision])
 
   async function refresh() {
     try {
@@ -158,6 +160,7 @@ export function Workshop({ deviceId, kind }: { deviceId: string; kind?: RecordKi
                       <li key={record.id}>
                         <strong>{record.name}{record.version && ` · ${record.version}`}</strong>
                         {summary && <p>{summary}</p>}
+                        {record.followUpDate && <p>Follow-up: {record.followUpDate}</p>}
                         {record.previousFirmware && <p>Previous firmware: {record.previousFirmware}</p>}
                         {record.notes && <p className="notes">{record.notes}</p>}
                         <div className="workshop-entry-actions">

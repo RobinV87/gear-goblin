@@ -239,3 +239,20 @@ select:focus-visible { outline: 3px solid #288896; outline-offset: 3px; }
 .device-photo-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid #c7d0c1; }
 .device-photo-panel .secondary { padding: 7px 10px; font-size: 13px; }
 .device-photo-preview { display: block; width: 100%; max-height: 240px; object-fit: contain; background: #e4ecd9; border-radius: 8px; margin-top: 10px; }
+
+.collection-filters { margin: 0 0 20px; padding: 14px 16px; border: 1px solid #c7d0c1; border-radius: 12px; background: #fffaf0; }
+.collection-filter-fields { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 12px; }
+.collection-filter-fields label { margin-bottom: 0; }
+.collection-filters > button { margin-top: 10px; padding: 6px 10px; font-size: 13px; }
+.setup-copy, .model-guides { margin-top: 12px; }
+.setup-copy summary { font-weight: 750; cursor: pointer; }
+.setup-copy form { margin-top: 12px; }
+.setup-copy label { max-width: 380px; }
+.setup-copy button { padding: 7px 10px; font-size: 13px; }
+.model-guides ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 8px; }
+.model-guides a { color: #334e3f; text-underline-offset: 2px; }
+.model-guides a svg { vertical-align: middle; }
+@media (max-width: 620px) {
+  .collection-filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .collection-filter-fields label:first-child { grid-column: 1 / -1; }
+}
