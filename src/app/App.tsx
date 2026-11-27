@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Boxes, Gamepad2, HardDrive, Plus, Settings, Smartphone, Wrench, LayoutGrid, List, Pencil, Trash2, X } from 'lucide-react'
 import { ModelSpecifications } from '../features/devices/ModelSpecifications'
 import { SuggestedField } from '../features/devices/SuggestedField'
-import { anbernicModels } from '../features/devices/anbernicModels'
+import { getHandheldModels, handheldManufacturers } from '../features/devices/handheldCatalog'
 import { type Device, type DeviceInput } from '../features/devices/model'
 import { deviceRepository } from '../services/deviceRepository'
 
@@ -15,7 +15,7 @@ function DeviceForm({ device, close, saved }: { device: Device | null; close: ()
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   async function submit(event: FormEvent) { event.preventDefault(); setSaving(true); setError(''); try { if (device) await deviceRepository.update(device.id, form); else await deviceRepository.create(form); await saved(); close() } catch { setError('Could not save this device. Check the required fields and try again.') } finally { setSaving(false) } }
-  const isAnbernic = form.manufacturer.trim().toLowerCase() === 'anbernic'
+  const models = getHandheldModels(form.manufacturer)
   function field(key: keyof DeviceInput, label: string, required = false, suggestions?: readonly string[]) {
     if (suggestions) {
       return <SuggestedField label={label} value={form[key]} suggestions={suggestions}
@@ -33,7 +33,7 @@ function DeviceForm({ device, close, saved }: { device: Device | null; close: ()
       </label>
     )
   }
-  return <div className="overlay"><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="form-title"><div className="dialog-head"><div><span className="eyebrow">YOUR COLLECTION</span><h2 id="form-title">{device ? 'Edit handheld' : 'Add a handheld'}</h2></div><button className="icon-button" aria-label="Close" onClick={close}><X /></button></div><form onSubmit={submit}><div className="fields">{field('manufacturer', 'Manufacturer', true, ['Anbernic'])}{field('model', 'Model', true, isAnbernic ? anbernicModels : undefined)}{field('nickname', 'Nickname')}{field('variant', 'Color or variant')}</div><ModelSpecifications manufacturer={form.manufacturer} model={form.model} /><label>Notes<textarea rows={3} maxLength={5000} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></label>{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving}>{saving ? 'Saving…' : 'Save handheld'}</button></div></form></section></div>
+  return <div className="overlay"><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="form-title"><div className="dialog-head"><div><span className="eyebrow">YOUR COLLECTION</span><h2 id="form-title">{device ? 'Edit handheld' : 'Add a handheld'}</h2></div><button className="icon-button" aria-label="Close" onClick={close}><X /></button></div><form onSubmit={submit}><div className="fields">{field('manufacturer', 'Manufacturer', true, handheldManufacturers)}{field('model', 'Model', true, models)}{field('nickname', 'Nickname')}{field('variant', 'Color or variant')}</div><ModelSpecifications manufacturer={form.manufacturer} model={form.model} /><label>Notes<textarea rows={3} maxLength={5000} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></label>{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving}>{saving ? 'Saving…' : 'Save handheld'}</button></div></form></section></div>
 }
 export default function App() {
   const [section, setSection] = useState<Section>('Collection'); const [devices, setDevices] = useState<Device[]>([]); const [editing, setEditing] = useState<Device | null | undefined>(undefined); const [view, setView] = useState<'grid' | 'list'>('grid'); const [error, setError] = useState(''); const [loading, setLoading] = useState(true)
