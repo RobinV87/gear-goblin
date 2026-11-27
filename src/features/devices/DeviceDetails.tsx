@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react'
 import { Gamepad2, Pencil, Trash2, X } from 'lucide-react'
+import { Workshop } from '../workshop/Workshop'
 import { ModelSpecifications } from './ModelSpecifications'
 import type { Device } from './model'
 
@@ -53,6 +54,7 @@ export function DeviceDetails({ device, error, onClose, onEdit, onDelete }: Devi
         </section>
         <ModelSpecifications manufacturer={device.manufacturer} model={device.model} expanded />
       </div>
+      <div className="device-workshop"><Workshop key={device.id} deviceId={device.id} /></div>
       {error && <p className="error" role="alert">{error}</p>}
       <footer className="device-details-footer">
         <button className="device-delete" onClick={onDelete}><Trash2 size={16} aria-hidden="true" /> Delete handheld</button>
