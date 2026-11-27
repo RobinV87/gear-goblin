@@ -27,6 +27,9 @@ Device data remains in local browser storage. The app has no dedicated fields fo
 ## Roadmap
 
 - 1C: versioned browser storage, validated backup and transactional restore are implemented. The native SQLite adapter remains pending.
+- 1C follow-ups, in priority order:
+  1. Handheld setup summary with the latest recorded successful firmware installation, storage slots and their purpose, and the last recorded change.
+  2. Collection CSV export with one row per handheld, including the model, variant, firmware, and storage summary. ZIP remains the format for full backup and restore.
 - 1D: Android packaging, usability, documentation and release preparation.
 - Later: model catalog, comparisons, QR labels, repair reminders, statistics, wishlist, optional donations and synchronization, desktop app, and advanced configuration management.
 
