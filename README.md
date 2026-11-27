@@ -12,6 +12,14 @@ Add or replace a JPEG, PNG, or WebP photo from a handheld's card. In **Settings 
 
 Requires Node.js 24 or newer and npm. Run `npm ci`, then `npm run dev`. Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` for checks. The project uses React, TypeScript, Vite, Dexie/IndexedDB and Vitest.
 
+## Optional Google Drive export
+
+Enable the Google Drive API in a Google Cloud project and configure its OAuth consent screen. Create a **Web application** OAuth client with `https://robinv87.github.io` as an authorized JavaScript origin. For local development, add the exact localhost origin used by Vite. Use a test account while the OAuth app is in testing.
+
+Set the GitHub Actions repository variable `GOOGLE_DRIVE_CLIENT_ID` to the public OAuth client ID, then rerun the Pages deployment. For local builds, set `VITE_GOOGLE_DRIVE_CLIENT_ID` in the environment. Both accept the client ID only.
+
+When configured, **Settings → Backup & restore → Choose where to save → Save to Google Drive** sends the selected backup ZIP to My Drive after Google authorization. It requests the per-file `drive.file` scope and uses the access token for that export only. Download and system sharing remain available. To restore from Drive, choose the ZIP from your device's file picker or download it first.
+
 ## Android
 
 Android packaging, native SQLite, file import/export and device testing are planned for milestone 1D (storage and backup groundwork in 1C). There is no Android build yet. The intended application ID is `app.geargoblin.mobile`; verify ownership and availability before publishing and update the Capacitor configuration and Android package at that time.

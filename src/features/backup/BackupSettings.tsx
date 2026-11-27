@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
-import { Download, FolderOpen, Share2, Upload } from 'lucide-react'
+import { CloudUpload, Download, FolderOpen, Share2, Upload } from 'lucide-react'
 import { deviceRepository, type CollectionSnapshot } from '../../services/deviceRepository'
 import { createBackup, maxArchive, readBackup } from './backup'
+import { driveClientId, loadDriveAuthorization, requestDriveToken, uploadDriveBackup } from './googleDrive'
 
 interface SavePickerWindow extends Window {
   showSaveFilePicker?: (options: {
@@ -11,6 +12,7 @@ interface SavePickerWindow extends Window {
 }
 
 export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
+  const [drive, setDrive] = useState<Awaited<ReturnType<typeof loadDriveAuthorization>>>()
   const [prepared, setPrepared] = useState<File | null>(null)
   const [pending, setPending] = useState<CollectionSnapshot | null>(null)
   const [status, setStatus] = useState('')
@@ -44,8 +46,16 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
       const bytes = createBackup(await deviceRepository.snapshot())
       const name = `gear-goblin-${new Date().toISOString().slice(0, 10)}.zip`
       const file = new File([new Uint8Array(bytes)], name, { type: 'application/zip' })
-      if (chooseDestination) setPrepared(file)
-      else download(file)
+      if (chooseDestination) {
+        setPrepared(file)
+        if (driveClientId && !drive) {
+          try {
+            setDrive(await loadDriveAuthorization())
+          } catch {
+            setError('Google sign-in could not load. You can still download or share the ZIP.')
+          }
+        }
+      } else download(file)
     } catch {
       setError('Could not create a backup. The ZIP limit is 50 MB.')
     } finally {
@@ -94,6 +104,22 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
     }
   }
 
+  async function saveToDrive(file: File) {
+    if (!drive) return
+    start()
+    try {
+      const token = await requestDriveToken(drive)
+      if (!token) return
+      await uploadDriveBackup(file, token)
+      setPrepared(null)
+      setStatus('Backup saved to My Drive.')
+    } catch (error) {
+      setError(error instanceof Error && error.name === 'Error' ? error.message : 'Could not save to Google Drive. You can still download the ZIP.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function choose(file: File) {
     start()
     setPending(null)
@@ -132,7 +158,7 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
       <p>Your collection saves in this browser. Export an unencrypted ZIP to keep a copy of your handhelds, workshop entries, and photos somewhere you choose.</p>
       <div className="backup-actions">
         <button className="primary" disabled={busy} onClick={() => void exportFile()}><Download size={17} aria-hidden="true" /> Export collection</button>
-        {(savePicker || canShareFiles) && <button className="secondary" disabled={busy} onClick={() => void exportFile(true)}>
+        {(savePicker || canShareFiles || driveClientId) && <button className="secondary" disabled={busy} onClick={() => void exportFile(true)}>
           <FolderOpen size={17} aria-hidden="true" /> Choose where to save
         </button>}
         <button className="secondary" disabled={busy} onClick={() => picker.current?.click()}><Upload size={17} aria-hidden="true" /> Choose backup</button>
@@ -146,6 +172,9 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
         <h3>Save backup</h3>
         <p>{prepared.name}</p>
         <div className="backup-actions">
+          {drive && <button className="primary" disabled={busy} onClick={() => void saveToDrive(prepared)}>
+            <CloudUpload size={17} aria-hidden="true" /> Save to Google Drive
+          </button>}
           {savePicker && <button className="primary" disabled={busy} onClick={() => void saveToLocation(prepared)}>
             <FolderOpen size={17} aria-hidden="true" /> Save backup as
           </button>}
