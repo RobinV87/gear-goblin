@@ -78,3 +78,36 @@ input, textarea { background: #f7f6ed; border: 2px solid #87978a; border-radius:
   .mobile-nav .selected svg { background: var(--orange); color: #232a25; border-radius: 8px; box-sizing: content-box; padding: 4px 12px; margin: -4px -12px; }
 }
 @media (prefers-reduced-motion: reduce) { .primary, .secondary { transition: none; } }
+
+.suggested-field { min-width: 0; margin-bottom: 16px; }
+.suggested-field label { margin-bottom: 0; }
+.suggested-field-input { position: relative; }
+.suggested-field-input input { padding-right: 36px; }
+.suggested-field-input svg {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.suggested-field-options {
+  max-height: 176px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 4px;
+  border: 2px solid #87978a;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: var(--ink);
+}
+.suggested-field-options li {
+  padding: 10px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.suggested-field-options li:hover,
+.suggested-field-options li[aria-selected="true"] { background: #dce7d5; }
