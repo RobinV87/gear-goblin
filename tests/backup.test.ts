@@ -65,12 +65,13 @@ it('upgrades an existing version 2 collection without losing device records', as
   expect((await repo.snapshot()).images).toEqual([])
 })
 
-it('reads version 1 backups and restores maintenance follow-up dates in version 2', async () => {
+it('reads version 1 backups and restores maintenance follow-up dates in current backups', async () => {
   const repo = new BrowserDeviceRepository(crypto.randomUUID())
   const device = await repo.create(input)
   const original = await repo.snapshot()
   const files = unzipSync(createBackup(original))
   const manifest = JSON.parse(strFromU8(files['manifest.json']))
+  delete manifest.games
   manifest.version = 1
   files['manifest.json'] = strToU8(JSON.stringify(manifest))
   expect(readBackup(zipSync(files, { level: 0 }))).toEqual(original)
@@ -80,4 +81,31 @@ it('reads version 1 backups and restores maintenance follow-up dates in version 
   })
   const snapshot = await repo.snapshot()
   expect(readBackup(createBackup(snapshot))).toEqual(snapshot)
+})
+
+it('round-trips shared games and rejects a game assigned to a missing handheld', async () => {
+  const repo = new BrowserDeviceRepository(crypto.randomUUID())
+  const first = await repo.create(input)
+  const second = await repo.create({ ...input, model: 'RG DS Plus' })
+  await Promise.all([
+    repo.saveGame({ title: 'Metroid Fusion', system: 'Game Boy Advance', deviceIds: [first.id] }),
+    repo.saveGame({ title: ' metroid fusion ', system: 'GAME BOY ADVANCE', deviceIds: [second.id] }),
+  ])
+  const original = await repo.snapshot()
+  expect(original.games).toHaveLength(1)
+  expect(new Set(original.games[0].deviceIds)).toEqual(new Set([first.id, second.id]))
+  const restored = readBackup(createBackup(original))
+  expect(restored).toEqual(original)
+  const target = new BrowserDeviceRepository(crypto.randomUUID())
+  await target.restore(restored)
+  await target.delete(first.id)
+  expect((await target.listGames())[0].deviceIds).toEqual([second.id])
+  await target.delete(second.id)
+  expect(await target.listGames()).toEqual([])
+
+  const files = unzipSync(createBackup(original))
+  const manifest = JSON.parse(strFromU8(files['manifest.json']))
+  manifest.games[0].deviceIds = [crypto.randomUUID()]
+  files['manifest.json'] = strToU8(JSON.stringify(manifest))
+  expect(() => readBackup(zipSync(files, { level: 0 }))).toThrow()
 })

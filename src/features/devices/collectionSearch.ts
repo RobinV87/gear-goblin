@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { liveQuery } from 'dexie'
 import { deviceRepository } from '../../services/deviceRepository'
+import type { Game } from '../games/model'
 import type { WorkshopRecord } from '../workshop/model'
 import type { Device } from './model'
 
@@ -19,7 +20,30 @@ export function useFirmwareRecords() {
   return { records, unavailable }
 }
 
-export function filterDevices(devices: Device[], records: WorkshopRecord[], search: string, manufacturer: string, firmware: string) {
+export function useGames() {
+  const [games, setGames] = useState<Game[]>([])
+  const [unavailable, setUnavailable] = useState(false)
+
+  useEffect(() => {
+    const subscription = liveQuery(() => deviceRepository.listGames()).subscribe({
+      next: setGames,
+      error: () => setUnavailable(true),
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const byDevice = new Map<string, Game[]>()
+  for (const game of games) {
+    for (const id of game.deviceIds) {
+      const entries = byDevice.get(id) ?? []
+      entries.push(game)
+      byDevice.set(id, entries)
+    }
+  }
+  return { byDevice, unavailable }
+}
+
+export function filterDevices(devices: Device[], records: WorkshopRecord[], search: string, manufacturer: string, firmware: string, gamesByDevice: Map<string, Game[]>) {
   const terms = normalizedSearch(search).split(/\s+/).filter(Boolean)
   const firmwareByDevice = new Map<string, WorkshopRecord[]>()
   for (const entry of records) {
@@ -36,6 +60,10 @@ export function filterDevices(devices: Device[], records: WorkshopRecord[], sear
       device.manufacturer, device.model, device.nickname,
       ...entries.map(entry => `${entry.name} ${entry.version}`),
     ].join(' '))
-    return terms.every(term => text.includes(term))
+    if (terms.every(term => text.includes(term))) return true
+    return (gamesByDevice.get(device.id) ?? []).some(game => {
+      const gameText = normalizedSearch(`${game.title} ${game.system}`)
+      return terms.every(term => text.includes(term) || gameText.includes(term))
+    })
   })
 }

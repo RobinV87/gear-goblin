@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Boxes, ChevronRight, Gamepad2, HardDrive, Plus, Settings, Smartphone, Wrench, LayoutGrid, List, X } from 'lucide-react'
 import { BackupSettings } from '../features/backup/BackupSettings'
 import { CollectionFilters } from '../features/devices/CollectionFilters'
-import { filterDevices, normalizedSearch, useFirmwareRecords } from '../features/devices/collectionSearch'
+import { filterDevices, normalizedSearch, useFirmwareRecords, useGames } from '../features/devices/collectionSearch'
 import { DeviceDetails } from '../features/devices/DeviceDetails'
 import { ModelSpecifications } from '../features/devices/ModelSpecifications'
 import { SuggestedField } from '../features/devices/SuggestedField'
@@ -76,7 +76,8 @@ export default function App() {
   const { records: firmwareRecords, unavailable: firmwareUnavailable } = useFirmwareRecords()
   const manufacturer = devices.some(device => normalizedSearch(device.manufacturer) === manufacturerFilter) ? manufacturerFilter : ''
   const firmware = firmwareRecords.some(record => normalizedSearch(record.name) === firmwareFilter) ? firmwareFilter : ''
-  const visibleDevices = filterDevices(devices, firmwareRecords, search, manufacturer, firmware)
+  const { byDevice: gamesByDevice, unavailable: gamesUnavailable } = useGames()
+  const visibleDevices = filterDevices(devices, firmwareRecords, search, manufacturer, firmware, gamesByDevice)
   const filtering = Boolean(search.trim() || manufacturer || firmware)
   function clearFilters() {
     setSearch('')
@@ -99,13 +100,13 @@ export default function App() {
     void deviceRepository.list().then(result => { if (active) setDevices(result) }).catch(() => { if (active) setError('Unable to load your collection. Check browser storage permissions and try again.') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [])
-  async function remove(device: Device) { if (!window.confirm(`Delete ${device.nickname || `${device.manufacturer} ${device.model}`} and its workshop entries and photo? This cannot be undone.`)) return; try { await deviceRepository.delete(device.id); closeDetails(true); await refresh() } catch { setError('Could not delete this device. Please try again.') } }
+  async function remove(device: Device) { if (!window.confirm(`Delete ${device.nickname || `${device.manufacturer} ${device.model}`} and its workshop entries and photo? Games assigned only to this handheld will also be deleted. This cannot be undone.`)) return; try { await deviceRepository.delete(device.id); closeDetails(true); await refresh() } catch { setError('Could not delete this device. Please try again.') } }
   const collection = section === 'Collection' || section === 'Devices'
   return <div className="shell"><aside className="sidebar"><div className="brand"><Goblin/><div><strong>GEAR GOBLIN</strong><small>YOUR HANDHELD HOARD</small></div></div><div className="sidebar-label">THE GARAGE</div><nav aria-label="Main navigation">{sections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? 'nav active' : 'nav'} aria-current={section === name ? 'page' : undefined} onClick={() => setSection(name)}><Icon size={19}/><span>{name}</span></button>)}</nav><div className="sidebar-foot">MADE FOR YOUR<br/><b>PLAYER TWO.</b></div></aside><main><header className="topbar"><span>YOUR DIGITAL GARAGE <span className="slash">/</span> {section.toUpperCase()}</span><span className="offline"><i/> OFFLINE &amp; PRIVATE</span></header><div className="content">{collection ? <><div className="heading"><div><span className="eyebrow">THE GOOD STUFF, ALL IN ONE PLACE</span><h1>{section === 'Collection' ? 'Your collection' : 'Your devices'}<span className="orange">.</span></h1><p>Give every handheld in your hoard a home.</p></div><button className="primary add" ref={addButton} onClick={() => setEditing(null)}><Plus size={19}/> Add handheld</button></div><div className="overview"><div><span className="eyebrow">THE HOARD AT A GLANCE</span><div className="stat"><strong>{devices.length.toString().padStart(2, '0')}</strong><span>HANDHELDS<br/>IN YOUR COLLECTION</span></div></div><div className="overview-art"><Gamepad2 size={86} strokeWidth={1}/><span>READY<br/>PLAYER ONE</span></div></div><div className="list-heading"><div><span className="eyebrow">THE LINEUP</span><h2>All handhelds <span className="count" aria-live="polite">{filtering ? `${visibleDevices.length} of ${devices.length}` : devices.length}</span></h2></div><div className="view-toggle" aria-label="Collection view"><button aria-label="Grid view" aria-pressed={view === 'grid'} onClick={() => setView('grid')}><LayoutGrid size={18}/></button><button aria-label="List view" aria-pressed={view === 'list'} onClick={() => setView('list')}><List size={18}/></button></div></div>{devices.length > 0 && (
   <CollectionFilters devices={devices} records={firmwareRecords} unavailable={firmwareUnavailable}
     search={search} manufacturer={manufacturer} firmware={firmware} onSearch={setSearch}
     onManufacturer={setManufacturerFilter} onFirmware={setFirmwareFilter} onClear={clearFilters} />
-)}{error && <p className="error" role="alert">{error}</p>}{loading ? <p>Loading your collection…</p> : devices.length === 0 ? <div className="empty"><Goblin/><h3>Your hoard starts here.</h3><p>Add your first handheld and make this garage your own.</p><button className="secondary" onClick={() => setEditing(null)}><Plus size={17}/> Add your first handheld</button></div> : visibleDevices.length === 0 ? <p>No handhelds match your filters.</p> : <div className={view === 'grid' ? 'device-grid' : 'device-list'}>{visibleDevices.map(device => <article className="card" key={device.id}>
+)}{gamesUnavailable && <p className="error" role="alert">Game search is unavailable.</p>}{error && <p className="error" role="alert">{error}</p>}{loading ? <p>Loading your collection…</p> : devices.length === 0 ? <div className="empty"><Goblin/><h3>Your hoard starts here.</h3><p>Add your first handheld and make this garage your own.</p><button className="secondary" onClick={() => setEditing(null)}><Plus size={17}/> Add your first handheld</button></div> : visibleDevices.length === 0 ? <p>No handhelds match your filters.</p> : <div className={view === 'grid' ? 'device-grid' : 'device-list'}>{visibleDevices.map(device => <article className="card" key={device.id}>
   <button
     type="button"
     className="device-card-open"
@@ -129,6 +130,8 @@ export default function App() {
   <DeviceDetails
     device={selectedDevice}
     devices={devices}
+    games={gamesByDevice.get(selectedDevice.id) ?? []}
+    gamesUnavailable={gamesUnavailable}
     onSetupCopied={refresh}
     error={error}
     onClose={() => closeDetails()}

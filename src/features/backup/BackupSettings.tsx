@@ -162,7 +162,7 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
   return (
     <section className="placeholder backup-panel">
       <h2>Backup &amp; restore</h2>
-      <p>Your collection saves in this browser. Export an unencrypted ZIP to keep a copy of your handhelds, workshop entries, and photos somewhere you choose.</p>
+      <p>Your collection saves in this browser. Export an unencrypted ZIP to keep a copy of your handhelds, workshop entries, games, and photos somewhere you choose.</p>
       <div className="backup-actions">
         <button className="primary" disabled={busy} onClick={() => void exportFile()}><Download size={17} aria-hidden="true" /> Export collection</button>
         {!isAndroidApp && (savePicker || canShareFiles || driveClientId) && <button className="secondary" disabled={busy} onClick={() => void exportFile(true)}>
@@ -199,7 +199,7 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
       </div>}
       {pending && <div className="restore-preview">
         <h3>Ready to restore</h3>
-        <p>Handhelds: {pending.devices.length} · Workshop entries: {pending.records.length} · Photos: {pending.images.length}</p>
+        <p>Handhelds: {pending.devices.length} · Workshop entries: {pending.records.length} · Photos: {pending.images.length} · Games: {pending.games.length}</p>
         <p>Restoring replaces your entire current collection.</p>
         <div className="backup-actions">
           <button className="primary" disabled={busy} onClick={() => void restore()}>Replace collection</button>

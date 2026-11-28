@@ -8,6 +8,8 @@ Open a handheld's device card to record firmware installations, storage configur
 
 Add or replace a JPEG, PNG, or WebP photo from a handheld's card. In **Settings → Backup & restore**, export an unencrypted ZIP of your handhelds, workshop entries, and photos. Choose a backup to validate it and preview its contents before confirming a full replacement. Backups are limited to 50 MB and photos to 5 MB each.
 
+Log games from a handheld's **Games** section. Assign a title to multiple handhelds and search the collection by game title or system. ZIP backups include game lists and their handheld assignments.
+
 ## Development
 
 Requires Node.js 24 or newer and npm. Run `npm ci`, then `npm run dev`. Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` for checks. The project uses React, TypeScript, Vite, Dexie/IndexedDB and Vitest.
