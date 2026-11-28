@@ -24,7 +24,7 @@ export function CollectionFilters({ devices, records, unavailable, search, manuf
     <div className="collection-filters" role="search" aria-label="Filter handhelds">
       <div className="collection-filter-fields">
         <label>Search handhelds
-          <input type="search" value={search} placeholder="Model, nickname, brand, or firmware"
+          <input type="search" value={search} placeholder="Model, nickname, firmware, or game title"
             onChange={event => onSearch(event.target.value)} />
         </label>
         <label>Manufacturer

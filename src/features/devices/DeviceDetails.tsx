@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Gamepad2, Pencil, Trash2, X } from 'lucide-react'
+import { DeviceGames } from '../games/DeviceGames'
+import type { Game } from '../games/model'
 import { Workshop } from '../workshop/Workshop'
 import { DevicePhotoSettings } from './DevicePhotoSettings'
 import { ModelGuides } from './ModelGuides'
@@ -10,6 +12,8 @@ import type { Device } from './model'
 interface DeviceDetailsProps {
   device: Device
   devices: Device[]
+  games: Game[]
+  gamesUnavailable: boolean
   onSetupCopied: () => Promise<void>
   error: string
   onClose: () => void
@@ -17,7 +21,7 @@ interface DeviceDetailsProps {
   onDelete: () => void
 }
 
-export function DeviceDetails({ device, devices, onSetupCopied, error, onClose, onEdit, onDelete }: DeviceDetailsProps) {
+export function DeviceDetails({ device, devices, games, gamesUnavailable, onSetupCopied, error, onClose, onEdit, onDelete }: DeviceDetailsProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const [setupRevision, setSetupRevision] = useState(0)
@@ -60,6 +64,9 @@ export function DeviceDetails({ device, devices, onSetupCopied, error, onClose, 
           <DevicePhotoSettings key={device.id} deviceId={device.id} />
         </section>
         <ModelSpecifications manufacturer={device.manufacturer} model={device.model} expanded />
+      </div>
+      <div className="device-workshop">
+        <DeviceGames key={device.id} deviceId={device.id} devices={devices} games={games} unavailable={gamesUnavailable} />
       </div>
       <div className="device-workshop">
         <Workshop key={device.id} deviceId={device.id} setupRevision={setupRevision} />

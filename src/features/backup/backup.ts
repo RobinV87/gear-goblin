@@ -1,3 +1,4 @@
+import { gameIdentity } from '../games/model'
 import { strFromU8, strToU8, zipSync, unzipSync } from 'fflate'
 import { z } from 'zod'
 import { validImage, type DeviceImage } from '../devices/image'
@@ -12,7 +13,13 @@ const calendarDate = z.union([z.literal(''), z.iso.date()])
 const device = z.object({ id: uuid, manufacturer: text.refine(value => value.trim().length > 0), model: text.refine(value => value.trim().length > 0), nickname: text, variant: text, notes: text, purchaseDate: calendarDate.optional(), createdAt: timestamp, updatedAt: timestamp }).strict()
 const record = z.object({ id: uuid, deviceId: uuid, kind: z.enum(['firmware','storage','accessory','modification','maintenance']), name: text.refine(value => value.trim().length > 0), version: text, date: calendarDate, previousFirmware: text, succeeded: z.boolean(), capacity: text, purpose: text, notes: text, followUpDate: calendarDate.optional(), createdAt: timestamp }).strict()
 const image = z.object({ deviceId: uuid, mime: z.enum(['image/jpeg','image/png','image/webp']), path: z.string().max(100) }).strict()
-const manifest = z.object({ format: z.literal('gear-goblin-backup'), version: z.union([z.literal(1), z.literal(2)]), exportedAt: timestamp, devices: z.array(device).max(10000), records: z.array(record).max(100000), images: z.array(image).max(10000) }).strict()
+const game = z.object({
+  id: uuid,
+  title: z.string().max(160).refine(value => Boolean(value.trim())),
+  system: z.string().max(120).refine(value => Boolean(value.trim())),
+  deviceIds: z.array(uuid).min(1).max(10000),
+}).strict()
+const manifest = z.object({ format: z.literal('gear-goblin-backup'), version: z.union([z.literal(1), z.literal(2), z.literal(3)]), exportedAt: timestamp, devices: z.array(device).max(10000), records: z.array(record).max(100000), images: z.array(image).max(10000), games: z.array(game).max(100000).optional() }).strict()
 
 function crc32(bytes: Uint8Array): number {
   let crc = 0xffffffff
@@ -55,7 +62,7 @@ export function createBackup(snapshot: CollectionSnapshot): Uint8Array {
     const path = `images/${item.deviceId}.${ext}`; files[path] = item.data
     return { deviceId: item.deviceId, mime: item.mime, path }
   })
-  const payload = manifest.parse({ format: 'gear-goblin-backup', version: 2, exportedAt: new Date().toISOString(), devices: snapshot.devices, records: snapshot.records, images })
+  const payload = manifest.parse({ format: 'gear-goblin-backup', version: 3, exportedAt: new Date().toISOString(), devices: snapshot.devices, records: snapshot.records, images, games: snapshot.games })
   files['manifest.json'] = strToU8(JSON.stringify(payload))
   if (files['manifest.json'].length > maxManifest ||
       Object.values(files).reduce((size, file) => size + file.length, 0) > maxArchive) {
@@ -74,6 +81,15 @@ export function readBackup(data: Uint8Array): CollectionSnapshot {
     }
     const ids = new Set(parsed.devices.map(d => d.id)), recordIds = new Set(parsed.records.map(r => r.id)), imageIds = new Set(parsed.images.map(i => i.deviceId))
     if (ids.size !== parsed.devices.length || recordIds.size !== parsed.records.length || imageIds.size !== parsed.images.length || parsed.records.some(r => !ids.has(r.deviceId)) || parsed.images.some(i => !ids.has(i.deviceId))) throw new Error('Duplicate or orphaned records.')
+    if ((parsed.version === 3) !== (parsed.games !== undefined)) throw new Error('Invalid games data.')
+    const games = parsed.games ?? []
+    const gameIds = new Set(games.map(game => game.id))
+    const identities = new Set(games.map(game => gameIdentity(game.title, game.system)))
+    if (gameIds.size !== games.length || identities.size !== games.length ||
+        games.some(game => new Set(game.deviceIds).size !== game.deviceIds.length ||
+          game.deviceIds.some(deviceId => !ids.has(deviceId)))) {
+      throw new Error('Duplicate or orphaned games.')
+    }
     const expected = new Set(['manifest.json', ...parsed.images.map(i => i.path)])
     if (expected.size !== paths.size || [...paths].some(path => !expected.has(path))) throw new Error('Unexpected archive contents.')
     const images: DeviceImage[] = parsed.images.map(i => {
@@ -81,6 +97,6 @@ export function readBackup(data: Uint8Array): CollectionSnapshot {
       if (i.path !== `images/${i.deviceId}.${ext}` || !files[i.path] || !validImage(files[i.path], i.mime)) throw new Error('Invalid image.')
       return { deviceId: i.deviceId, mime: i.mime, data: files[i.path] }
     })
-    return { devices: parsed.devices, records: parsed.records, images }
+    return { devices: parsed.devices, records: parsed.records, images, games }
   } catch { throw new Error('This backup is invalid, unsupported, or damaged. Your collection was not changed.') }
 }
