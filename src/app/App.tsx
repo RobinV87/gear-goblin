@@ -1,3 +1,5 @@
+import { App as NativeApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Boxes, ChevronRight, Gamepad2, HardDrive, Plus, Settings, Smartphone, Wrench, LayoutGrid, List, X } from 'lucide-react'
 import { BackupSettings } from '../features/backup/BackupSettings'
@@ -8,6 +10,7 @@ import { ModelSpecifications } from '../features/devices/ModelSpecifications'
 import { SuggestedField } from '../features/devices/SuggestedField'
 import { getHandheldModels, handheldManufacturers } from '../features/devices/handheldCatalog'
 import { type Device, type DeviceInput } from '../features/devices/model'
+import { AndroidUpdateSettings } from '../features/updates/AndroidUpdateSettings'
 import { WorkshopPage } from '../features/workshop/Workshop'
 import { deviceRepository } from '../services/deviceRepository'
 
@@ -51,6 +54,22 @@ function DeviceForm({ device, close, saved }: { device: Device | null; close: ()
 }
 export default function App() {
   const [section, setSection] = useState<Section>('Collection'); const [devices, setDevices] = useState<Device[]>([]); const [editing, setEditing] = useState<Device | null | undefined>(undefined); const [view, setView] = useState<'grid' | 'list'>('grid'); const [error, setError] = useState(''); const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return
+    const listener = NativeApp.addListener('backButton', () => {
+      const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]')
+      const dialog = dialogs[dialogs.length - 1]
+      if (dialog) {
+        if (dialog.dispatchEvent(new Event('cancel', { cancelable: true }))) dialog.close()
+      } else if (section !== 'Collection') {
+        setSection('Collection')
+      } else {
+        void NativeApp.minimizeApp()
+      }
+    })
+    return () => { void listener.then(handle => handle.remove()) }
+  }, [section])
+
   const [search, setSearch] = useState('')
   const [manufacturerFilter, setManufacturerFilter] = useState('')
   const [firmwareFilter, setFirmwareFilter] = useState('')
@@ -106,7 +125,7 @@ export default function App() {
     </span>
     <ChevronRight className="device-card-arrow" size={20} aria-hidden="true" />
   </button>
-</article>)}</div>}</> : <><span className="eyebrow">THE GARAGE</span><h1>{section}<span className="orange">.</span></h1>{section === 'Settings' ? <><BackupSettings refresh={refresh} /><div className="placeholder"><h2>About Gear Goblin</h2><p>Your handheld hoard, organized. Your collection stays on this device; no account or online service is required.</p><p>Milestone 1C</p></div></> : <WorkshopPage key={section} devices={devices} loading={loading} kind={section === 'Firmware' ? 'firmware' : 'storage'} />}</>}</div></main><nav className="mobile-nav" aria-label="Main navigation">{sections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? 'selected' : ''} aria-current={section === name ? 'page' : undefined} onClick={() => setSection(name)}><Icon size={20}/><span>{name}</span></button>)}</nav>{selectedDevice && editing === undefined && (
+</article>)}</div>}</> : <><span className="eyebrow">THE GARAGE</span><h1>{section}<span className="orange">.</span></h1>{section === 'Settings' ? <><BackupSettings refresh={refresh} />{Capacitor.getPlatform() === 'android' && <AndroidUpdateSettings />}<div className="placeholder"><h2>About Gear Goblin</h2><p>Your handheld hoard, organized. Your collection stays on this device; no account or online service is required.</p><p>Milestone 1C</p></div></> : <WorkshopPage key={section} devices={devices} loading={loading} kind={section === 'Firmware' ? 'firmware' : 'storage'} />}</>}</div></main><nav className="mobile-nav" aria-label="Main navigation">{sections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? 'selected' : ''} aria-current={section === name ? 'page' : undefined} onClick={() => setSection(name)}><Icon size={20}/><span>{name}</span></button>)}</nav>{selectedDevice && editing === undefined && (
   <DeviceDetails
     device={selectedDevice}
     devices={devices}

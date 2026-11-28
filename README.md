@@ -20,9 +20,17 @@ Set the GitHub Actions repository variable `GOOGLE_DRIVE_CLIENT_ID` to the publi
 
 When configured, **Settings → Backup & restore → Choose where to save → Save to Google Drive** sends the selected backup ZIP to My Drive after Google authorization. It requests the per-file `drive.file` scope and uses the access token for that export only. Download and system sharing remain available. To restore from Drive, choose the ZIP from your device's file picker or download it first.
 
-## Android
+## Android sideload preview
 
-Android packaging, native SQLite, file import/export and device testing are planned for milestone 1D (storage and backup groundwork in 1C). There is no Android build yet. The intended application ID is `app.geargoblin.mobile`; verify ownership and availability before publishing and update the Capacitor configuration and Android package at that time.
+Open the **Build Android APK** workflow run and download the **Gear-Goblin-Android** artifact. Unzip it, transfer `Gear-Goblin-Android.apk` to your phone, and open it. Android may ask you to allow installs from the app that opened the APK. This is a debug-signed preview. Export a backup before switching between CI-built APKs because their signing keys may differ.
+
+The Android app bundles the website and can open without internet access. Its WebView has a separate local collection. Move an existing browser collection with **Settings → Backup & restore**. On Android, **Export collection** opens the system file picker to save the ZIP.
+
+Build locally with JDK 21 and Android SDK 35. Run `npm ci`, `npm run android:sync`, then `cd android && ./gradlew assembleDebug`. The APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`. The application ID is `app.geargoblin.mobile`.
+
+The Android **Settings → Check for updates** button checks successful builds from `main`. GitHub Actions builds Android updates when relevant changes land on `main`. You can also run **Build Android APK** manually. Each workflow run uses its run number plus one as the APK version code.
+
+For in-place installs of future previews, keep a dedicated Android debug keystore and store its Base64 contents in the Actions secret `ANDROID_TEST_KEYSTORE_BASE64`. Use alias `androiddebugkey` and keystore/key password `android`, as expected by Gradle's debug build. Keep the keystore private. If the currently installed APK was signed by a different key, export a backup before uninstalling it, then import the ZIP after installing the first APK signed with the dedicated key.
 
 ## Screenshots
 
