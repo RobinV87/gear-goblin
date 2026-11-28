@@ -1,3 +1,5 @@
+import { App as NativeApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Boxes, ChevronRight, Gamepad2, HardDrive, Plus, Settings, Smartphone, Wrench, LayoutGrid, List, X } from 'lucide-react'
 import { BackupSettings } from '../features/backup/BackupSettings'
@@ -51,6 +53,22 @@ function DeviceForm({ device, close, saved }: { device: Device | null; close: ()
 }
 export default function App() {
   const [section, setSection] = useState<Section>('Collection'); const [devices, setDevices] = useState<Device[]>([]); const [editing, setEditing] = useState<Device | null | undefined>(undefined); const [view, setView] = useState<'grid' | 'list'>('grid'); const [error, setError] = useState(''); const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return
+    const listener = NativeApp.addListener('backButton', () => {
+      const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]')
+      const dialog = dialogs[dialogs.length - 1]
+      if (dialog) {
+        if (dialog.dispatchEvent(new Event('cancel', { cancelable: true }))) dialog.close()
+      } else if (section !== 'Collection') {
+        setSection('Collection')
+      } else {
+        void NativeApp.minimizeApp()
+      }
+    })
+    return () => { void listener.then(handle => handle.remove()) }
+  }, [section])
+
   const [search, setSearch] = useState('')
   const [manufacturerFilter, setManufacturerFilter] = useState('')
   const [firmwareFilter, setFirmwareFilter] = useState('')

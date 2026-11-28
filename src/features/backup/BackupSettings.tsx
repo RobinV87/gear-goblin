@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { CloudUpload, Download, FolderOpen, Share2, Upload } from 'lucide-react'
 import { deviceRepository, type CollectionSnapshot } from '../../services/deviceRepository'
+import { isAndroidApp, saveAndroidBackup } from './androidBackup'
 import { createBackup, maxArchive, readBackup } from './backup'
 import { driveClientId, loadDriveAuthorization, requestDriveToken, uploadDriveBackup } from './googleDrive'
 
@@ -26,8 +27,8 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
     setError('')
   }
 
-  const savePicker = (window as SavePickerWindow).showSaveFilePicker
-  const canShareFiles = typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
+  const savePicker = isAndroidApp ? undefined : (window as SavePickerWindow).showSaveFilePicker
+  const canShareFiles = !isAndroidApp && typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
 
   function download(file: File) {
     const url = URL.createObjectURL(file)
@@ -48,12 +49,18 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
       const file = new File([new Uint8Array(bytes)], name, { type: 'application/zip' })
       if (chooseDestination) {
         setPrepared(file)
-        if (driveClientId && !drive) {
+        if (!isAndroidApp && driveClientId && !drive) {
           try {
             setDrive(await loadDriveAuthorization())
           } catch {
             setError('Google sign-in could not load. You can still download or share the ZIP.')
           }
+        }
+      } else if (isAndroidApp) {
+        try {
+          if (await saveAndroidBackup(file)) setStatus('Backup saved.')
+        } catch {
+          setError('Could not save the backup. Try a different location.')
         }
       } else download(file)
     } catch {
@@ -158,7 +165,7 @@ export function BackupSettings({ refresh }: { refresh: () => Promise<void> }) {
       <p>Your collection saves in this browser. Export an unencrypted ZIP to keep a copy of your handhelds, workshop entries, and photos somewhere you choose.</p>
       <div className="backup-actions">
         <button className="primary" disabled={busy} onClick={() => void exportFile()}><Download size={17} aria-hidden="true" /> Export collection</button>
-        {(savePicker || canShareFiles || driveClientId) && <button className="secondary" disabled={busy} onClick={() => void exportFile(true)}>
+        {!isAndroidApp && (savePicker || canShareFiles || driveClientId) && <button className="secondary" disabled={busy} onClick={() => void exportFile(true)}>
           <FolderOpen size={17} aria-hidden="true" /> Choose where to save
         </button>}
         <button className="secondary" disabled={busy} onClick={() => picker.current?.click()}><Upload size={17} aria-hidden="true" /> Choose backup</button>
