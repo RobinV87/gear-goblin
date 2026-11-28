@@ -10,6 +10,7 @@ import { ModelSpecifications } from '../features/devices/ModelSpecifications'
 import { SuggestedField } from '../features/devices/SuggestedField'
 import { getHandheldModels, handheldManufacturers } from '../features/devices/handheldCatalog'
 import { type Device, type DeviceInput } from '../features/devices/model'
+import { AndroidUpdateSettings } from '../features/updates/AndroidUpdateSettings'
 import { WorkshopPage } from '../features/workshop/Workshop'
 import { deviceRepository } from '../services/deviceRepository'
 
@@ -124,7 +125,7 @@ export default function App() {
     </span>
     <ChevronRight className="device-card-arrow" size={20} aria-hidden="true" />
   </button>
-</article>)}</div>}</> : <><span className="eyebrow">THE GARAGE</span><h1>{section}<span className="orange">.</span></h1>{section === 'Settings' ? <><BackupSettings refresh={refresh} /><div className="placeholder"><h2>About Gear Goblin</h2><p>Your handheld hoard, organized. Your collection stays on this device; no account or online service is required.</p><p>Milestone 1C</p></div></> : <WorkshopPage key={section} devices={devices} loading={loading} kind={section === 'Firmware' ? 'firmware' : 'storage'} />}</>}</div></main><nav className="mobile-nav" aria-label="Main navigation">{sections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? 'selected' : ''} aria-current={section === name ? 'page' : undefined} onClick={() => setSection(name)}><Icon size={20}/><span>{name}</span></button>)}</nav>{selectedDevice && editing === undefined && (
+</article>)}</div>}</> : <><span className="eyebrow">THE GARAGE</span><h1>{section}<span className="orange">.</span></h1>{section === 'Settings' ? <><BackupSettings refresh={refresh} />{Capacitor.getPlatform() === 'android' && <AndroidUpdateSettings />}<div className="placeholder"><h2>About Gear Goblin</h2><p>Your handheld hoard, organized. Your collection stays on this device; no account or online service is required.</p><p>Milestone 1C</p></div></> : <WorkshopPage key={section} devices={devices} loading={loading} kind={section === 'Firmware' ? 'firmware' : 'storage'} />}</>}</div></main><nav className="mobile-nav" aria-label="Main navigation">{sections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? 'selected' : ''} aria-current={section === name ? 'page' : undefined} onClick={() => setSection(name)}><Icon size={20}/><span>{name}</span></button>)}</nav>{selectedDevice && editing === undefined && (
   <DeviceDetails
     device={selectedDevice}
     devices={devices}

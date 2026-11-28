@@ -7,7 +7,7 @@ android {
         applicationId "app.geargoblin.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode (providers.gradleProperty("gearBuildNumber").orElse("1").get().toInteger())
         versionName "0.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
