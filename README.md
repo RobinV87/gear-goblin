@@ -28,9 +28,11 @@ The Android app bundles the website and can open without internet access. Its We
 
 Build locally with JDK 21 and Android SDK 35. Run `npm ci`, `npm run android:sync`, then `cd android && ./gradlew assembleDebug`. The APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`. The application ID is `app.geargoblin.mobile`.
 
-The Android **Settings → Check for updates** button checks successful builds from `main`. GitHub Actions builds Android updates when relevant changes land on `main`. You can also run **Build Android APK** manually. Each workflow run uses its run number plus one as the APK version code.
+**Settings → Android updates → Check for updates** looks for public Android prereleases. **Download & install** downloads the APK and opens Android's installer for confirmation. Android may ask you to allow installs from Gear Goblin the first time.
 
-For in-place installs of future previews, keep a dedicated Android debug keystore and store its Base64 contents in the Actions secret `ANDROID_TEST_KEYSTORE_BASE64`. Use alias `androiddebugkey` and keystore/key password `android`, as expected by Gradle's debug build. Keep the keystore private. If the currently installed APK was signed by a different key, export a backup before uninstalling it, then import the ZIP after installing the first APK signed with the dedicated key.
+To publish, run **Build Android APK** on `main` with **Publish a public Android prerelease** checked. The workflow requires the repository's `ANDROID_TEST_KEYSTORE_BASE64` secret. Use the same dedicated debug keystore for every release, with alias `androiddebugkey` and keystore/key password `android`. Keep a private copy of the keystore. The workflow uses its run number plus one as the APK version code.
+
+To switch from a preview signed by a different key, export a ZIP backup first. Uninstall the old preview, install the first public prerelease APK directly from GitHub, then restore your ZIP. Updates signed with the same key can install over that build.
 
 ## Screenshots
 
